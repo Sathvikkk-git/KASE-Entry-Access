@@ -2,7 +2,7 @@
 
 This guide explains the whole project in plain language: what it does, how it works, how to set it up from nothing, how to use it every day, how to fix common problems, and what we plan to add later.
 
-Last updated: 12 October 2026 (newest-first columns added)
+Last updated: 12 October 2026 (afternoon scanning on field days, security review)
 
 ---
 
@@ -40,7 +40,7 @@ There are 158 students in three batches:
 
 ## 3. How a normal day works
 
-1. **Before the class**, someone from the KASE team opens the class scheduler, picks the batch, type, date and start time, and clicks **Create class**. A new column for that class appears in the batch's tab in the Google Sheet.
+1. **Before the class**, someone from the KASE team opens the class scheduler, picks the batch, type, date and start time, and clicks **Create class**. On the day of the class, a column for it appears in the batch's tab in the Google Sheet, right after Department.
 2. **When students arrive**, the receptionist opens the scanner on the phone and taps **Start scanning**. Each student shows their ID card and the barcode is held inside the white box.
    - Green "Scan successful" with a beep means the scan is saved.
    - Red "Scan failed" with a buzz means it wasn't a student ID barcode. Try again, or tap **Type roll number**.
@@ -105,6 +105,8 @@ The receptionist does not need to know whether the student "should" be there. Th
 | No class | Real student, but their batch had no class at that time |
 | Unknown | Roll number isn't in the Anveshana list (for example a student from another program) |
 | Bad time | The phone's clock was clearly wrong (more than 15 minutes in the future) |
+| Too old | The scan was more than 7 days old when it reached the server. It is not counted (this stops back-dated uploads). |
+| Invalid | What was sent isn't a roll number. Only possible if someone bypasses the scanner page. |
 
 ---
 
@@ -114,7 +116,7 @@ The receptionist does not need to know whether the student "should" be there. Th
 |---|---|
 | Class length | A **Class** is 2 hours from its start time |
 | Early arrivals | Scans count from **20 minutes before** the start. For an 8:00 class, scans from 7:40 to 10:00 count. |
-| Field days | Two columns: **FN** and **AN**. FN is filled by scans from **8:50 AM to 2:00 PM**. AN is typed by hand for now. The system never touches the AN column. |
+| Field days | Two columns for the day, **FN first, then AN**. Scans from **8:50 AM up to 2:00 PM** mark **FN**. Scans from **2:00 PM to 4:00 PM** mark **AN**. A student scanned in the morning and again in the afternoon gets P in both. Scans after 4:00 PM aren't counted. Both columns can also be typed by hand. |
 | College hours | 9:10 AM – 4:00 PM (used for field days) |
 | Back-to-back classes | If a scan falls inside two windows (e.g. 11:50 between a 10:00 and a 12:00 class), it goes to the class whose start time is nearest, here 12:00. |
 | Same batch, same time | The scheduler refuses two classes for one batch that overlap |
@@ -122,7 +124,7 @@ The receptionist does not need to know whether the student "should" be there. Th
 | Check-out | Not recorded. Check-in only. |
 | Scanned twice | Counts once |
 | Class scheduled late | If students were scanned **before** the class was created, they still get P when it's created. The system rechecks all saved scans whenever a class is created or edited. |
-| Class edited | Attendance for that class is recalculated from the scans. Manual AN entries on field days are kept. |
+| Class edited | Attendance for that class is recalculated from the scans. For a Class and for **FN**, the column is rebuilt from scans only, so a hand-typed P there can be cleared. For **AN**, hand-typed entries are always kept and scanned students are added. (So if a field day is moved to another date, its old AN entries stay. Check them after moving.) |
 | Class cancelled | Its column is removed. It stays in the Classes tab as "Cancelled". |
 | Column order | Newest class first, in the master sheet and the HOD sheets. Today's class sits right after Department. Older classes shift right, and their P marks move with them. |
 | Future classes | Saved only in the Classes tab (and shown in the scheduler). Their column appears on the day of the class, just after midnight (at the next 10-minute refresh or the first scan of the day), and then stays. |
@@ -138,7 +140,7 @@ All times are India time.
 - A code is accepted from a **single clean read** if it **looks like a roll number** (2 digits, QM, then 6 letters/digits). Code 128 barcodes carry their own check digit, so a damaged read is rejected rather than misread. (Until 12 Oct it needed two matching reads, which made scratched covers hard to scan.)
 - **Torch** and **Zoom** controls appear under the camera on phones that support them. The zoom setting is remembered.
 - The same card scanned again within 20 seconds is ignored, so holding the card in view doesn't create duplicates.
-- **Offline:** each scan is saved on the phone first with the phone's time and a unique ID. When the internet is back, the phone uploads them. If an upload is repeated (network drop mid-upload), the server recognises the unique ID and doesn't count it twice.
+- **Offline:** each scan is saved on the phone first with the phone's time and a unique ID. When the internet is back, the phone uploads them. If an upload is repeated (network drop mid-upload), the server recognises the unique ID and doesn't count it twice. Scans must reach the server within **7 days**; older ones are refused.
 - The top bar shows the phone's time, because that's the time the system uses. **Automatic date and time must be ON** on the reception phone.
 - The screen stays awake while scanning.
 - Logging out with scans still waiting asks for confirmation. Waiting scans stay on the phone and upload after the next login.
@@ -199,7 +201,7 @@ Open `website/config.js` and paste the Web app URL as `API_URL`.
 | Change a class's time/date/batch | Class scheduler → **Edit** on the class → change → **Save changes**. Attendance is recalculated automatically. |
 | Cancel a class | Class scheduler → **Cancel** → **Yes, cancel class** |
 | See past or cancelled classes | Tick **Past and cancelled** in the class list |
-| Enter AN attendance for a field day | Type **P** in the "Field AN" column of the batch tab in the master sheet |
+| AN attendance on a field day | Scan students between 2:00 PM and 4:00 PM, or type **P** in the "Field AN" column of the batch tab in the master sheet. Both work together. |
 | Change a password | In the master sheet: **Entry Access menu → Set coordinator / reception password**. Everyone using that account must log in again. Do this whenever someone leaves the KASE team. |
 | Change an HOD | In the **Departments** tab, change the email in **HOD Email**. The system removes the old person's access, gives the new person access, and emails them the link. The link itself never changes. |
 | Update HOD sheets right now | **Entry Access menu → Refresh HOD sheets now** (otherwise every 10 minutes) |
@@ -245,7 +247,7 @@ Before the real launch, also:
 
 | Problem | Likely cause and fix |
 |---|---|
-| Scan successful, but no P in the sheet | Check the **Scans** tab, Result column. "No class": the class wasn't created, or the time/batch is wrong. Fix the class, and attendance recalculates automatically. "Unknown": roll number not in the list. |
+| Scan successful, but no P in the sheet | Check the **Scans** tab, Result column. "No class": the class wasn't created, the time/batch is wrong, or (on a field day) the scan was after 4:00 PM. Fix the class, and attendance recalculates automatically. "Unknown": roll number not in the list. "Too old": the phone held the scan for more than 7 days before uploading. |
 | Phone says "X waiting to sync" for a long time | No internet, or the login expired. Tap **Sync now**. If it asks to log in, log in. Scans are kept. |
 | Barcode won't scan | Tilt to avoid glare. For scratched covers, use the Torch and Zoom controls and hold the card a bit further away. Otherwise take the card out of the cover, or use **Type roll number**. |
 | "Camera permission was denied" | Chrome → site settings → Camera → Allow, then tap Start scanning again. |
@@ -262,9 +264,12 @@ Before the real launch, also:
 
 ## 13. Security and privacy
 
-- Passwords are stored as salted SHA-256 hashes, never as plain text.
-- Logins expire after 12 hours (coordinator) and 30 days (reception). Changing a password logs out everyone using it.
-- The reception account can only send scans. It cannot create or change classes.
+- Passwords are stored as salted SHA-256 hashes (300 rounds), never as plain text. 10 wrong passwords lock that account for 15 minutes.
+- Logins are signed tokens. A token that has been changed in any way (for example a reception token edited to say "coordinator") is rejected. They expire after 12 hours (coordinator) and 30 days (reception). Changing a password logs out everyone using it.
+- The reception account can only send scans. It cannot create or change classes. Every action is checked on the server, not just on the web page.
+- Everything the phone sends is checked: roll numbers must match the roll-number pattern, times can't be in the future or more than 7 days old, and text that could act as a spreadsheet formula (starting with = + - @) is stored as plain text.
+- The web pages use a strict Content Security Policy: they can only load their own files and the ZXing barcode library, and only talk to the Apps Script backend. This blocks injected scripts.
+- The pages never display text from the server as HTML, so a crafted message can't run code in the browser.
 - HODs can only **view** their own department's sheet. They have no access to the master sheet. (A filter view would not be enough, because anyone with view access can turn it off.)
 - The website contains no student data. Student names live only in the Google Sheet and in Code.gs.
 - Keep the master sheet's sharing **Restricted**.
@@ -292,28 +297,27 @@ Before the real launch, also:
 
 Things we discussed or that would be natural next steps:
 
-0. *(Done 12 Oct 2026)* Newest class first, and future classes hidden until their day. Scanner: single-read acceptance, torch and zoom for scratched covers.
+Already done (12 Oct 2026): newest class first; future classes hidden until their day; single-read scanning with torch and zoom for scratched covers; **AN attendance by scan on field days** (2:00 PM – 4:00 PM); security review.
 
-1. **AN attendance by scan on field days.** Second scan window in the afternoon (e.g. around 2:00 PM). The sheet already has a separate AN column ready.
-2. **Late marking.** Mark "L" instead of P after a cut-off (e.g. 15 minutes after start).
-3. **Automatic absent.** Fill blanks with "A" after a class ends.
-4. **Check-out scans.** Record when students leave, to check they stayed for the session.
-5. **Live result at reception.** Show the student's name and "Marked present" / "No class now" on the phone when online.
-6. **Phone clock check.** The server tells the phone if its clock is wrong.
-7. **Attendance summary.** Percentages per student and department, and a dashboard for the KASE team.
-8. **Individual coordinator accounts** instead of one shared login, so changes show who made them.
-9. **Student notifications.** Email or WhatsApp to students with low attendance.
-10. **Several reception phones/gates.** Already supported. Add a "gate name" setting per phone for reports.
-11. **Block HOD downloads.** Stop viewers from downloading/printing the HOD sheets (needs the Drive advanced service).
-12. **Next year's batch.** Import a new student list from Excel through a menu option instead of editing Code.gs.
-13. **Move to a KASE Google Workspace account** and the kase.co.in domain (section 11).
+1. **Late marking.** Mark "L" instead of P after a cut-off (e.g. 15 minutes after start).
+2. **Automatic absent.** Fill blanks with "A" after a class ends.
+3. **Check-out scans.** Record when students leave, to check they stayed for the session.
+4. **Live result at reception.** Show the student's name and "Marked present" / "No class now" on the phone when online.
+5. **Phone clock check.** The server tells the phone if its clock is wrong.
+6. **Attendance summary.** Percentages per student and department, and a dashboard for the KASE team.
+7. **Individual coordinator accounts** instead of one shared login, so changes show who made them.
+8. **Student notifications.** Email or WhatsApp to students with low attendance.
+9. **Several reception phones/gates.** Already supported. Add a "gate name" setting per phone for reports.
+10. **Block HOD downloads.** Stop viewers from downloading/printing the HOD sheets (needs the Drive advanced service).
+11. **Next year's batch.** Import a new student list from Excel through a menu option instead of editing Code.gs.
+12. **Move to a KASE Google Workspace account** and the kase.co.in domain (section 11).
 
 ---
 
 ## 16. How it was tested
 
-- The backend logic was tested against a simulated Google Sheet with **58 automatic checks**: logins, wrong passwords, early arrivals, duplicates, unknown roll numbers, back-to-back classes, field-day FN/AN, editing/moving/cancelling classes, HOD email changes, newest-first ordering, and future classes appearing on their day.
-- Both web pages were tested in a real browser on a phone-sized screen with **27 checks**: logging in, creating/editing/cancelling classes, the overlap error, scanning, the red failure for a wrong barcode, offline saving and later upload, typing a roll number, and the torch and zoom controls.
+- The backend logic was tested against a simulated Google Sheet with **78 automatic checks**: logins, wrong passwords and lockout, forged and edited tokens, early arrivals, duplicates, unknown roll numbers, back-to-back classes, field-day FN and AN scanning (including the 2:00 PM and 4:00 PM edges), hand-typed AN entries being kept, editing/moving/cancelling classes, HOD email changes, newest-first ordering, future classes appearing on their day, formula-like input, back-dated scans and malformed requests.
+- Both web pages were tested in a real browser on a phone-sized screen with **28 checks**: logging in, creating/editing/cancelling classes, the overlap error, scanning, the red failure for a wrong barcode, offline saving and later upload, typing a roll number, the torch and zoom controls, and that the security policy blocks nothing the pages need.
 - The barcode on a real KGR ID card was decoded from a photo, both with and without the plastic cover.
 
 The first live test on the reception phone and the real Google Sheet is still the final check.
@@ -328,8 +332,9 @@ The first live test on the reception phone and the real Google Sheet is still th
 | `PROJECT_GUIDE.md` | This guide |
 | `website/` | The two web pages and their files. Upload these to GitHub Pages. |
 | `website/config.js` | The backend's web app URL |
-| `website/scan.html` | Reception scanner |
-| `website/admin.html` | Class scheduler |
+| `website/scan.html`, `scan.js` | Reception scanner (page and its logic) |
+| `website/admin.html`, `admin.js` | Class scheduler (page and its logic) |
+| `website/common.js`, `style.css` | Shared helpers and styling |
 | `website/sw.js` | Makes the scanner work offline |
 | `backend/Code.gs` | The Apps Script backend (contains student names, keep private) |
 | `data/Anveshana_2026_students_by_batch.xlsx` | Cleaned student list |

@@ -12,8 +12,8 @@ This repository holds only the **website**, the `website/` folder described in t
 
 | Page | Who uses it |
 |---|---|
-| `scan.html` | Receptionist. Scans student ID barcodes. It works offline after the first visit. Add it to the phone's home screen. |
-| `admin.html` | KASE team. Creates, edits and cancels classes. |
+| `scan.html` + `scan.js` | Receptionist. Scans student ID barcodes. It works offline after the first visit. Add it to the phone's home screen. |
+| `admin.html` + `admin.js` | KASE team. Creates, edits and cancels classes. |
 | `index.html` | Links to both pages. |
 | `config.js` | The Apps Script web app URL that the pages talk to. |
 
@@ -22,7 +22,7 @@ Live (testing): https://sathvikkk-git.github.io/KASE-Entry-Access/
 ## Key rules
 
 - A class lasts 2 hours. Scans count from 20 minutes before the start.
-- Field days get FN (scanned 8:50 AM – 2:00 PM) and AN (entered by hand) columns.
+- Field days get two columns, FN then AN. Scans from 8:50 AM to 2:00 PM mark FN, and scans from 2:00 PM to 4:00 PM mark AN. Both can also be typed by hand.
 - Unscanned students stay blank. The system records check-in only.
 - Unknown roll numbers, or students whose batch has no class at that time, are logged but not marked.
 - Class columns are **newest first**. Today's class sits right after Department, in the master sheet and the HOD sheets.
