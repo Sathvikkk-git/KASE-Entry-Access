@@ -1,6 +1,6 @@
 // Keeps the scanner page available without internet.
 // Bump VERSION whenever the site files change so phones pick up the new copy.
-const VERSION = 'kase-v1';
+const VERSION = 'kase-v2';
 const SHELL = ['./', 'index.html', 'scan.html', 'admin.html', 'style.css', 'common.js', 'config.js',
   'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png'];
 const ZXING = 'https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';
