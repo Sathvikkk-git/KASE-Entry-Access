@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f3864">
+<title>KASE Reception Scanner</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="style.css">
+<style>
+  .status { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: #7bd88f; flex: none; }
+  .dot.off { background: #f2b84b; }
+  .pill { background: rgba(255,255,255,.14); border-radius: 999px; padding: 4px 10px; white-space: nowrap; }
+
+  .scanner { position: relative; background: #000; border-radius: var(--radius); overflow: hidden; aspect-ratio: 4 / 3; }
+  .scanner video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .guide { position: absolute; left: 8%; right: 8%; top: 30%; bottom: 30%; border: 3px solid rgba(255,255,255,.85); border-radius: 10px; box-shadow: 0 0 0 999px rgba(0,0,0,.28); pointer-events: none; }
+  .guide-text { position: absolute; left: 0; right: 0; bottom: 10px; text-align: center; color: #fff; font-size: 14px; text-shadow: 0 1px 3px #000; pointer-events: none; }
+  .start { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: #fff; text-align: center; padding: 16px; }
+
+  .result { margin-top: 12px; border-radius: var(--radius); padding: 18px 16px; text-align: center; font-weight: 700; font-size: 22px; min-height: 84px; display: flex; flex-direction: column; justify-content: center; border: 2px solid var(--line); background: var(--card); color: var(--muted); }
+  .result small { display: block; font-size: 15px; font-weight: 500; margin-top: 4px; }
+  .result.ok { background: var(--ok-bg); border-color: var(--ok); color: var(--ok); }
+  .result.bad { background: var(--bad-bg); border-color: var(--bad); color: var(--bad); }
+  .row { display: flex; gap: 8px; margin-top: 12px; }
+  .row .btn { flex: 1; }
+
+  .recent { list-style: none; margin: 0; padding: 0; }
+  .recent li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); font-size: 15px; }
+  .recent li:first-child { border-top: 0; }
+  .recent .roll { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 600; }
+  .recent .st { color: var(--muted); font-size: 13px; white-space: nowrap; }
+  .recent .st.synced { color: var(--ok); }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">KASE Reception<small id="clock"></small></div>
+  <div class="spacer"></div>
+  <div class="status" id="status" hidden>
+    <span class="dot" id="netDot"></span>
+    <span class="pill" id="pending">All synced</span>
+  </div>
+  <button class="link-btn" id="logoutBtn" hidden>Log out</button>
+</header>
+
+<main class="wrap">
+  <!-- Login -->
+  <section class="card" id="loginCard" hidden>
+    <h2>Reception login</h2>
+    <form id="loginForm" autocomplete="on">
+      <label for="user">Username</label>
+      <input type="text" id="user" autocomplete="username" autocapitalize="none" required>
+      <label for="pass">Password</label>
+      <input type="password" id="pass" autocomplete="current-password" required>
+      <div class="msg" id="loginMsg" hidden></div>
+      <div class="row"><button class="btn block" id="loginBtn" type="submit">Log in</button></div>
+    </form>
+  </section>
+
+  <!-- Scanner -->
+  <section id="scanCard" hidden>
+    <div class="scanner">
+      <video id="video" playsinline muted></video>
+      <div class="guide" id="guide" hidden></div>
+      <div class="guide-text" id="guideText" hidden>Hold the barcode inside the box. Tilt the card to avoid glare.</div>
+      <div class="start" id="startPane">
+        <button class="btn" id="startBtn">Start scanning</button>
+        <div id="camMsg" style="font-size:14px;max-width:320px"></div>
+      </div>
+    </div>
+
+    <div class="result" id="result" role="status" aria-live="assertive">Ready to scan</div>
+
+    <div class="row">
+      <button class="btn secondary" id="manualBtn">Type roll number</button>
+      <button class="btn secondary" id="syncBtn">Sync now</button>
+    </div>
+
+    <form class="card" id="manualForm" style="margin-top:12px" hidden>
+      <label for="manualRoll">Roll number (if the barcode will not scan)</label>
+      <input type="text" id="manualRoll" autocapitalize="characters" autocomplete="off" placeholder="e.g. 25QM1A0503">
+      <div class="row">
+        <button class="btn" type="submit">Save</button>
+        <button class="btn secondary" type="button" id="manualCancel">Close</button>
+      </div>
+    </form>
+
+    <div class="card" style="margin-top:16px">
+      <h2>Recent scans</h2>
+      <ul class="recent" id="recent"></ul>
+      <p class="muted" id="recentEmpty">No scans yet.</p>
+      <p class="muted" id="syncInfo"></p>
+    </div>
+  </section>
+</main>
+
+<script src="config.js"></script>
+<script src="common.js"></script>
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const S = KASE.store;
+  const ROLL_RE = /^\d{2}QM[0-9A-Z]{6}$/;
+  const ZXING_URL = 'https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';
+  const K = { token: 'kase_rec_token', queue: 'kase_queue', recent: 'kase_recent', device: 'kase_device', lastSync: 'kase_last_sync' };
+
+  let token = S.get(K.token, null);
+  let device = S.get(K.device, null);
+  if (!device) { device = 'phone-' + KASE.uuid().slice(0, 6); S.set(K.device, device); }
+
+  // ---------------- Screens ----------------
+  function showLogin(message) {
+    $('loginCard').hidden = false;
+    $('scanCard').hidden = true;
+    $('logoutBtn').hidden = true;
+    $('status').hidden = true;
+    stopCamera();
+    const m = $('loginMsg');
+    m.hidden = !message; m.className = 'msg warn'; m.textContent = message || '';
+  }
+  function showScanner() {
+    $('loginCard').hidden = true;
+    $('scanCard').hidden = false;
+    $('logoutBtn').hidden = false;
+    $('status').hidden = false;
+    render();
+  }
+
+  $('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = $('loginBtn'), m = $('loginMsg');
+    btn.disabled = true; btn.textContent = 'Logging in…'; m.hidden = true;
+    try {
+      const r = await KASE.api('login', { username: $('user').value.trim(), password: $('pass').value });
+      if (r.role !== 'reception') throw new Error('Use the reception account on this page.');
+      token = r.token; S.set(K.token, token);
+      $('pass').value = '';
+      showScanner();
+      sync();
+    } catch (err) {
+      m.hidden = false; m.className = 'msg bad'; m.textContent = err.message;
+    } finally {
+      btn.disabled = false; btn.textContent = 'Log in';
+    }
+  });
+
+  $('logoutBtn').addEventListener('click', () => {
+    const pending = queue().length;
+    if (pending && !window.confirm(pending + ' scans have not synced yet. They stay on this phone and upload after the next login. Log out?')) return;
+    token = null; S.del(K.token);
+    showLogin();
+  });
+
+  // ---------------- Queue and sync ----------------
+  const queue = () => S.get(K.queue, []);
+  const recent = () => S.get(K.recent, []);
+
+  function saveScan(roll) {
+    const scan = { id: KASE.uuid(), roll: roll, ts: Date.now() };
+    const q = queue(); q.push(scan);
+    if (!S.set(K.queue, q)) { flash(false, 'Phone storage full', 'Sync before scanning more'); return false; }
+    const r = recent(); r.unshift({ id: scan.id, roll: roll, ts: scan.ts, synced: false });
+    S.set(K.recent, r.slice(0, 15));
+    render();
+    clearTimeout(saveScan.t); saveScan.t = setTimeout(sync, 1500);
+    return true;
+  }
+
+  let syncing = false;
+  async function sync() {
+    if (syncing || !token) return;
+    const q = queue();
+    if (!q.length) { render(); return; }
+    syncing = true; render();
+    try {
+      const r = await KASE.api('submitScans', { token: token, device: device, scans: q.slice(0, 200) }, 45000);
+      const saved = new Set(r.saved);
+      S.set(K.queue, queue().filter((s) => !saved.has(s.id)));
+      S.set(K.recent, recent().map((x) => saved.has(x.id) ? Object.assign(x, { synced: true }) : x));
+      S.set(K.lastSync, Date.now());
+      if (queue().length) setTimeout(sync, 300);
+    } catch (err) {
+      if (err.code === 'AUTH') { token = null; S.del(K.token); showLogin('Please log in again. Saved scans are kept and will upload after login.'); }
+    } finally {
+      syncing = false; render();
+    }
+  }
+  setInterval(sync, 30000);
+  window.addEventListener('online', () => { render(); sync(); });
+  window.addEventListener('offline', render);
+  $('syncBtn').addEventListener('click', sync);
+
+  function render() {
+    const n = queue().length;
+    const online = navigator.onLine;
+    $('netDot').className = 'dot' + (online ? '' : ' off');
+    $('pending').textContent = syncing ? 'Syncing…' : (n ? n + ' waiting to sync' : 'All synced');
+    if (!online && n) $('pending').textContent = 'Offline · ' + n + ' saved';
+    const last = S.get(K.lastSync, 0);
+    $('syncInfo').textContent = last ? 'Last synced at ' + KASE.clock(last) + '.' : '';
+    const list = recent();
+    $('recentEmpty').hidden = list.length > 0;
+    $('recent').innerHTML = '';
+    list.slice(0, 10).forEach((x) => {
+      const li = document.createElement('li');
+      const a = document.createElement('span'); a.className = 'roll'; a.textContent = x.roll;
+      const b = document.createElement('span'); b.className = 'st' + (x.synced ? ' synced' : '');
+      b.textContent = KASE.clock(x.ts) + ' · ' + (x.synced ? 'Synced' : 'Saved on phone');
+      li.append(a, b); $('recent').append(li);
+    });
+  }
+
+  // ---------------- Feedback ----------------
+  let audio = null;
+  function beep(ok) {
+    try {
+      audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+      const tones = ok ? [[1046, 0, 0.12]] : [[220, 0, 0.15], [220, 0.2, 0.15]];
+      tones.forEach(([f, at, len]) => {
+        const o = audio.createOscillator(), g = audio.createGain();
+        o.frequency.value = f; o.type = ok ? 'sine' : 'square';
+        g.gain.setValueAtTime(0.18, audio.currentTime + at);
+        g.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + at + len);
+        o.connect(g).connect(audio.destination);
+        o.start(audio.currentTime + at); o.stop(audio.currentTime + at + len + 0.02);
+      });
+    } catch (e) { /* sound unavailable */ }
+    if (navigator.vibrate) navigator.vibrate(ok ? 80 : [120, 80, 120]);
+  }
+  function flash(ok, title, detail) {
+    const el = $('result');
+    el.className = 'result ' + (ok ? 'ok' : 'bad');
+    el.innerHTML = '';
+    el.append(document.createTextNode((ok ? '✓ ' : '✕ ') + title));
+    if (detail) { const s = document.createElement('small'); s.textContent = detail; el.append(s); }
+    beep(ok);
+    clearTimeout(flash.t);
+    flash.t = setTimeout(() => { el.className = 'result'; el.textContent = 'Ready to scan'; }, ok ? 2500 : 3500);
+  }
+
+  // ---------------- Accepting a code ----------------
+  let lastSeen = null, seenCount = 0;
+  const recentlyAccepted = {};
+  function onCode(raw) {
+    const code = String(raw || '').trim().toUpperCase();
+    if (!code) return;
+    if (code === lastSeen) seenCount++; else { lastSeen = code; seenCount = 1; }
+    if (seenCount < 2) return;                       // two matching reads in a row
+    if (recentlyAccepted[code] && Date.now() - recentlyAccepted[code] < 5000) return;
+    recentlyAccepted[code] = Date.now();
+    lastSeen = null; seenCount = 0;
+    if (!ROLL_RE.test(code)) { flash(false, 'Scan failed', 'Not a student ID barcode. Try again.'); return; }
+    if (saveScan(code)) flash(true, 'Scan successful', code);
+  }
+  window.__kaseOnCode = onCode; // used by automated tests
+
+  $('manualBtn').addEventListener('click', () => { $('manualForm').hidden = false; $('manualRoll').focus(); });
+  $('manualCancel').addEventListener('click', () => { $('manualForm').hidden = true; });
+  $('manualForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const code = $('manualRoll').value.replace(/\s+/g, '').toUpperCase();
+    if (!ROLL_RE.test(code)) { flash(false, 'Check the roll number', 'It should look like 25QM1A0503.'); return; }
+    if (saveScan(code)) flash(true, 'Saved', code);
+    $('manualRoll').value = '';
+    $('manualForm').hidden = true;
+  });
+
+  // ---------------- Camera and decoding ----------------
+  let stream = null, running = false, detector = null, zx = null, canvas = null, wakeLock = null;
+
+  function loadScript(src) {
+    return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.append(s); });
+  }
+
+  async function getDecoder() {
+    if (detector || zx) return;
+    if ('BarcodeDetector' in window) {
+      try {
+        const formats = await window.BarcodeDetector.getSupportedFormats();
+        if (formats.indexOf('code_128') >= 0) { detector = new window.BarcodeDetector({ formats: ['code_128'] }); return; }
+      } catch (e) { /* fall back */ }
+    }
+    if (!window.ZXing) await loadScript(ZXING_URL);
+    const Z = window.ZXing;
+    const hints = new Map();
+    hints.set(Z.DecodeHintType.POSSIBLE_FORMATS, [Z.BarcodeFormat.CODE_128]);
+    hints.set(Z.DecodeHintType.TRY_HARDER, true);
+    zx = new Z.MultiFormatReader(); zx.setHints(hints);
+    canvas = document.createElement('canvas');
+  }
+
+  async function decodeFrame(video) {
+    if (detector) {
+      const codes = await detector.detect(video);
+      return codes.length ? codes[0].rawValue : null;
+    }
+    const Z = window.ZXing;
+    const w = video.videoWidth, h = video.videoHeight;
+    if (!w || !h) return null;
+    // Look at the middle band of the picture, where the guide box is.
+    const bandH = Math.round(h * 0.5), y0 = Math.round(h * 0.25);
+    const scale = Math.min(1, 1000 / w);
+    canvas.width = Math.round(w * scale); canvas.height = Math.round(bandH * scale);
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(video, 0, y0, w, bandH, 0, 0, canvas.width, canvas.height);
+    try {
+      const lum = new Z.HTMLCanvasElementLuminanceSource(canvas);
+      const r = zx.decodeWithState(new Z.BinaryBitmap(new Z.HybridBinarizer(lum)));
+      return r.getText();
+    } catch (e) { return null; }
+  }
+
+  async function startCamera() {
+    const msg = $('camMsg');
+    msg.textContent = 'Starting camera…';
+    try {
+      await getDecoder();
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
+      });
+      const v = $('video');
+      v.srcObject = stream; await v.play();
+      $('startPane').hidden = true; $('guide').hidden = false; $('guideText').hidden = false;
+      running = true; loop();
+      try { if (navigator.wakeLock) wakeLock = await navigator.wakeLock.request('screen'); } catch (e) { /* optional */ }
+    } catch (err) {
+      stopCamera();
+      msg.textContent = err && err.name === 'NotAllowedError'
+        ? 'Camera permission was denied. Allow camera access for this site in the browser settings, then tap Start again.'
+        : 'Could not start the camera' + (navigator.onLine ? '.' : ' (the scanner needs internet the first time it is opened).') + ' You can still type roll numbers.';
+    }
+  }
+
+  function stopCamera() {
+    running = false;
+    if (stream) stream.getTracks().forEach((t) => t.stop());
+    stream = null;
+    if (wakeLock) { wakeLock.release().catch(() => {}); wakeLock = null; }
+    $('startPane').hidden = false; $('guide').hidden = true; $('guideText').hidden = true;
+  }
+
+  async function loop() {
+    if (!running) return;
+    const v = $('video');
+    try {
+      if (v.readyState >= 2) {
+        const code = await decodeFrame(v);
+        if (code) onCode(code);
+      }
+    } catch (e) { /* skip frame */ }
+    setTimeout(loop, detector ? 80 : 120);
+  }
+
+  $('startBtn').addEventListener('click', () => {
+    try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); audio.resume(); } catch (e) { /* ignore */ }
+    startCamera();
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && running) { stopCamera(); $('camMsg').textContent = 'Camera paused. Tap Start scanning.'; }
+    if (!document.hidden) sync();
+  });
+
+  // ---------------- Clock (helps spot a wrong phone time) ----------------
+  function tick() { $('clock').textContent = 'Phone time ' + KASE.clock(Date.now()); }
+  tick(); setInterval(tick, 15000);
+
+  KASE.registerSW();
+  if (token) { showScanner(); sync(); } else showLogin();
+})();
+</script>
+</body>
+</html>
