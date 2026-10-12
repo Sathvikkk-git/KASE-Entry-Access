@@ -158,7 +158,7 @@
   $('manualForm').addEventListener('submit', (e) => {
     e.preventDefault();
     const code = $('manualRoll').value.replace(/\s+/g, '').toUpperCase();
-    if (!ROLL_RE.test(code)) { flash(false, 'Check the roll number', 'It should look like 25QM1A0503.'); return; }
+    if (!ROLL_RE.test(code)) { flash(false, 'Check the roll number', 'It should look like 25QM1A0000.'); return; }
     if (saveScan(code)) flash(true, 'Saved', code);
     $('manualRoll').value = '';
     $('manualForm').hidden = true;

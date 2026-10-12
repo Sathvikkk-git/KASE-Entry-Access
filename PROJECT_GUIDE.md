@@ -135,7 +135,7 @@ All times are India time.
 
 ## 7. How the scanner works
 
-- The barcode on the KGR ID card is a **Code 128** barcode that contains only the roll number in capitals (for example `24QM1A6603`).
+- The barcode on the KGR ID card is a **Code 128** barcode that contains only the roll number in capitals (for example `25QM1A0000`).
 - On Android phones, the scanner uses the phone's built-in barcode reader (fast and good with glare). On other phones it uses the free ZXing library.
 - A code is accepted from a **single clean read** if it **looks like a roll number** (2 digits, QM, then 6 letters/digits). Code 128 barcodes carry their own check digit, so a damaged read is rejected rather than misread. (Until 12 Oct it needed two matching reads, which made scratched covers hard to scan.)
 - **Torch** and **Zoom** controls appear under the camera on phones that support them. The zoom setting is remembered.
@@ -163,7 +163,7 @@ You only do this once. It's already done for the current test setup.
 2. Delete the sample code, paste everything from `backend/Code.gs`, click **Save**.
 3. In the function dropdown pick **setup**, click **Run**, and allow the permissions. You'll see "Google hasn't verified this app": click **Advanced → Go to Entry Access (unsafe) → Allow**. It's your own script.
 4. Open the **Execution log** and **copy the two passwords** (coordinator and reception). They're shown only once.
-5. Optional: run **selfTest**. The log should say one student "Marked" and `24QM1A6603` "Unknown".
+5. Optional: run **selfTest**. The log should say one real student "Marked" and a test roll number that is not in the list "Unknown".
 
 What setup does: creates all the tabs, loads the 158 students, creates the six department sheets, emails each HOD their link, creates the two logins, and sets up the 10-minute refresh. Running it again is safe. It won't duplicate anything.
 
