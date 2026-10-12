@@ -1,11 +1,22 @@
-# KASE Entry Access
+# KASE Entry Access – website
 
-Web pages for Anveshana attendance at KASE.
+The web pages for Anveshana attendance at KASE.
 
-- `scan.html` – reception scanner (works offline after the first visit; add it to the phone's home screen)
-- `admin.html` – class scheduler for the KASE team
-- `config.js` – the Apps Script web app URL
+| Page | Who uses it |
+|---|---|
+| `scan.html` | Receptionist. Scans student ID barcodes. It works offline after the first visit. Add it to the phone's home screen. |
+| `admin.html` | KASE team. Creates, edits and cancels classes. |
+| `index.html` | Links to both pages. |
 
-The data lives in the "Entry Access" Google Sheet; its Apps Script (`Code.gs`) is the backend.
+## How it works
 
-When you change any file here, also change `VERSION` in `sw.js` (e.g. `kase-v2`) so phones load the new copy.
+The pages send requests to a Google Apps Script web app (the URL is in `config.js`). That script stores everything in a private Google Sheet and checks every login. These pages contain no student data.
+
+## Updating
+
+1. Edit the files and commit.
+2. Change `VERSION` in `sw.js` (for example `kase-v1` → `kase-v2`) so phones load the new version instead of their saved copy.
+
+## Hosting
+
+Testing runs on GitHub Pages (Settings → Pages → Deploy from branch `main`, folder `/`). The live version will move to kase.co.in. Copy these files there; nothing else changes.
