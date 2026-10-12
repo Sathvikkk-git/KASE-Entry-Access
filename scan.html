@@ -21,6 +21,11 @@
   .guide-text { position: absolute; left: 0; right: 0; bottom: 10px; text-align: center; color: #fff; font-size: 14px; text-shadow: 0 1px 3px #000; pointer-events: none; }
   .start { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: #fff; text-align: center; padding: 16px; }
 
+  .camctl { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+  .camctl .zoom { flex: 1; display: flex; align-items: center; gap: 10px; margin: 0; font-weight: 600; }
+  .camctl .zoom input { flex: 1; accent-color: var(--navy); }
+  #torchBtn[aria-pressed=true] { background: #ffd54a; border-color: #e0b400; color: #3a2a00; }
+  .tip { font-size: 13px; color: var(--muted); margin: 8px 2px 0; line-height: 1.4; }
   .result { margin-top: 12px; border-radius: var(--radius); padding: 18px 16px; text-align: center; font-weight: 700; font-size: 22px; min-height: 84px; display: flex; flex-direction: column; justify-content: center; border: 2px solid var(--line); background: var(--card); color: var(--muted); }
   .result small { display: block; font-size: 15px; font-weight: 500; margin-top: 4px; }
   .result.ok { background: var(--ok-bg); border-color: var(--ok); color: var(--ok); }
@@ -73,7 +78,14 @@
       </div>
     </div>
 
+    <div class="camctl" id="camCtl" hidden>
+      <button class="btn secondary small" id="torchBtn" type="button" aria-pressed="false" hidden>Torch off</button>
+      <label class="zoom" id="zoomWrap" hidden>Zoom <input type="range" id="zoom"></label>
+    </div>
+
     <div class="result" id="result" role="status" aria-live="assertive">Ready to scan</div>
+
+    <p class="tip">Scratched cover? Turn on the torch, zoom in and hold the card a little further away, or slide the card out of the cover.</p>
 
     <div class="row">
       <button class="btn secondary" id="manualBtn">Type roll number</button>
@@ -243,16 +255,13 @@
   }
 
   // ---------------- Accepting a code ----------------
-  let lastSeen = null, seenCount = 0;
   const recentlyAccepted = {};
   function onCode(raw) {
     const code = String(raw || '').trim().toUpperCase();
     if (!code) return;
-    if (code === lastSeen) seenCount++; else { lastSeen = code; seenCount = 1; }
-    if (seenCount < 2) return;                       // two matching reads in a row
-    if (recentlyAccepted[code] && Date.now() - recentlyAccepted[code] < 5000) return;
+    // One read is enough: Code 128 has a built-in check digit, and the roll-number pattern is checked below.
+    if (recentlyAccepted[code] && Date.now() - recentlyAccepted[code] < 20000) return;
     recentlyAccepted[code] = Date.now();
-    lastSeen = null; seenCount = 0;
     if (!ROLL_RE.test(code)) { flash(false, 'Scan failed', 'Not a student ID barcode. Try again.'); return; }
     if (saveScan(code)) flash(true, 'Scan successful', code);
   }
@@ -326,6 +335,7 @@
       const v = $('video');
       v.srcObject = stream; await v.play();
       $('startPane').hidden = true; $('guide').hidden = false; $('guideText').hidden = false;
+      setupControls(stream.getVideoTracks()[0]);
       running = true; loop();
       try { if (navigator.wakeLock) wakeLock = await navigator.wakeLock.request('screen'); } catch (e) { /* optional */ }
     } catch (err) {
@@ -336,7 +346,34 @@
     }
   }
 
+  // Torch and zoom, on phones whose camera supports them.
+  let torchOn = false;
+  async function setupControls(track) {
+    const caps = (track && track.getCapabilities) ? track.getCapabilities() : {};
+    const apply = (c) => track.applyConstraints({ advanced: [c] }).catch(() => {});
+    if (caps.focusMode && caps.focusMode.indexOf('continuous') >= 0) apply({ focusMode: 'continuous' });
+    $('torchBtn').hidden = !caps.torch;
+    torchOn = false; $('torchBtn').setAttribute('aria-pressed', 'false'); $('torchBtn').textContent = 'Torch off';
+    if (caps.zoom && caps.zoom.max > caps.zoom.min) {
+      const z = $('zoom');
+      z.min = caps.zoom.min; z.max = Math.min(caps.zoom.max, caps.zoom.min * 5); z.step = caps.zoom.step || 0.1;
+      const saved = Number(S.get('kase_zoom', 0));
+      z.value = saved && saved >= z.min && saved <= z.max ? saved : (track.getSettings().zoom || caps.zoom.min);
+      apply({ zoom: Number(z.value) });
+      z.oninput = () => { apply({ zoom: Number(z.value) }); S.set('kase_zoom', Number(z.value)); };
+      $('zoomWrap').hidden = false;
+    } else $('zoomWrap').hidden = true;
+    $('camCtl').hidden = $('torchBtn').hidden && $('zoomWrap').hidden;
+    $('torchBtn').onclick = () => {
+      torchOn = !torchOn;
+      apply({ torch: torchOn });
+      $('torchBtn').setAttribute('aria-pressed', String(torchOn));
+      $('torchBtn').textContent = torchOn ? 'Torch on' : 'Torch off';
+    };
+  }
+
   function stopCamera() {
+    $('camCtl').hidden = true;
     running = false;
     if (stream) stream.getTracks().forEach((t) => t.stop());
     stream = null;

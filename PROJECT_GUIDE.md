@@ -135,14 +135,15 @@ All times are India time.
 
 - The barcode on the KGR ID card is a **Code 128** barcode that contains only the roll number in capitals (for example `24QM1A6603`).
 - On Android phones, the scanner uses the phone's built-in barcode reader (fast and good with glare). On other phones it uses the free ZXing library.
-- To avoid misreads from glare on the plastic ID cover, a code is only accepted when the **same value is read twice in a row** and it **looks like a roll number** (2 digits, QM, then 6 letters/digits).
-- The same card scanned again within 5 seconds is ignored, so holding the card still doesn't create duplicates.
+- A code is accepted from a **single clean read** if it **looks like a roll number** (2 digits, QM, then 6 letters/digits). Code 128 barcodes carry their own check digit, so a damaged read is rejected rather than misread. (Until 12 Oct it needed two matching reads, which made scratched covers hard to scan.)
+- **Torch** and **Zoom** controls appear under the camera on phones that support them. The zoom setting is remembered.
+- The same card scanned again within 20 seconds is ignored, so holding the card in view doesn't create duplicates.
 - **Offline:** each scan is saved on the phone first with the phone's time and a unique ID. When the internet is back, the phone uploads them. If an upload is repeated (network drop mid-upload), the server recognises the unique ID and doesn't count it twice.
 - The top bar shows the phone's time, because that's the time the system uses. **Automatic date and time must be ON** on the reception phone.
 - The screen stays awake while scanning.
 - Logging out with scans still waiting asks for confirmation. Waiting scans stay on the phone and upload after the next login.
 
-**Tips at the desk:** tilt the card slightly to avoid reflections from lights. If a card keeps failing, slide it out of the plastic cover or use **Type roll number**.
+**Tips at the desk:** tilt the card slightly to avoid reflections from lights. For a **scratched cover**, turn on the **Torch**, zoom in a little and hold the card slightly further from the phone, so it is in sharp focus. If a card still fails, slide it out of the cover or use **Type roll number**.
 
 ---
 
@@ -246,7 +247,7 @@ Before the real launch, also:
 |---|---|
 | Scan successful, but no P in the sheet | Check the **Scans** tab, Result column. "No class": the class wasn't created, or the time/batch is wrong. Fix the class, and attendance recalculates automatically. "Unknown": roll number not in the list. |
 | Phone says "X waiting to sync" for a long time | No internet, or the login expired. Tap **Sync now**. If it asks to log in, log in. Scans are kept. |
-| Barcode won't scan | Tilt to avoid glare, move closer/further, take the card out of the cover, or use **Type roll number**. |
+| Barcode won't scan | Tilt to avoid glare. For scratched covers, use the Torch and Zoom controls and hold the card a bit further away. Otherwise take the card out of the cover, or use **Type roll number**. |
 | "Camera permission was denied" | Chrome → site settings → Camera → Allow, then tap Start scanning again. |
 | Camera won't start offline | The scanner needs internet the very first time it's opened on a phone. After that it works offline. |
 | "Unexpected reply from the server" | The Apps Script deployment's access isn't set to **Anyone**, or the URL in config.js is wrong. |
@@ -281,7 +282,7 @@ Before the real launch, also:
 | Separate sheet per HOD | Filter views don't actually hide data from viewers |
 | Raw Scans log kept forever | Nothing is lost. Attendance can always be rebuilt or audited. |
 | Phone's time used, not upload time | So offline scans get the time the student actually arrived |
-| Two matching reads before accepting | Avoids misreads from glare on the plastic cover |
+| Single read accepted (changed from two) | Scratched covers rarely give two clean reads in a row. Code 128's check digit and the roll-number pattern already block misreads. |
 | Blank instead of "A" | HODs asked only for presence for now |
 | One shared coordinator login | Requested by the KASE team. Change the password when people leave. |
 
@@ -291,7 +292,7 @@ Before the real launch, also:
 
 Things we discussed or that would be natural next steps:
 
-0. *(Done 12 Oct 2026)* Newest class first, and future classes hidden until their day.
+0. *(Done 12 Oct 2026)* Newest class first, and future classes hidden until their day. Scanner: single-read acceptance, torch and zoom for scratched covers.
 
 1. **AN attendance by scan on field days.** Second scan window in the afternoon (e.g. around 2:00 PM). The sheet already has a separate AN column ready.
 2. **Late marking.** Mark "L" instead of P after a cut-off (e.g. 15 minutes after start).
@@ -312,7 +313,7 @@ Things we discussed or that would be natural next steps:
 ## 16. How it was tested
 
 - The backend logic was tested against a simulated Google Sheet with **58 automatic checks**: logins, wrong passwords, early arrivals, duplicates, unknown roll numbers, back-to-back classes, field-day FN/AN, editing/moving/cancelling classes, HOD email changes, newest-first ordering, and future classes appearing on their day.
-- Both web pages were tested in a real browser on a phone-sized screen with **20 checks**: logging in, creating/editing/cancelling classes, the overlap error, scanning, the red failure for a wrong barcode, offline saving and later upload, and typing a roll number.
+- Both web pages were tested in a real browser on a phone-sized screen with **27 checks**: logging in, creating/editing/cancelling classes, the overlap error, scanning, the red failure for a wrong barcode, offline saving and later upload, typing a roll number, and the torch and zoom controls.
 - The barcode on a real KGR ID card was decoded from a photo, both with and without the plastic cover.
 
 The first live test on the reception phone and the real Google Sheet is still the final check.
