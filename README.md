@@ -1,22 +1,38 @@
-# KASE Entry Access – website
+# KASE Entry Access
 
-The web pages for Anveshana attendance at KASE.
+Barcode-based attendance for the **Anveshana** program at KASE.
+
+The receptionist scans each student's college ID card with a phone. The system marks **P** in a Google Sheet for that student's class, and each HOD sees their own department's attendance in a separate view-only sheet.
+
+**Full guide:** [PROJECT_GUIDE.md](PROJECT_GUIDE.md) covers how it works, setup, daily use, troubleshooting and future plans.
+
+## What's in this repository
+
+This repository holds only the **website**, the `website/` folder described in the guide. The backend script (`Code.gs`) and the student list contain student names, so they are kept privately and never uploaded here.
 
 | Page | Who uses it |
 |---|---|
 | `scan.html` | Receptionist. Scans student ID barcodes. It works offline after the first visit. Add it to the phone's home screen. |
 | `admin.html` | KASE team. Creates, edits and cancels classes. |
 | `index.html` | Links to both pages. |
+| `config.js` | The Apps Script web app URL that the pages talk to. |
 
-## How it works
+Live (testing): https://sathvikkk-git.github.io/KASE-Entry-Access/
 
-The pages send requests to a Google Apps Script web app (the URL is in `config.js`). That script stores everything in a private Google Sheet and checks every login. These pages contain no student data.
+## Key rules
+
+- A class lasts 2 hours. Scans count from 20 minutes before the start.
+- Field days get FN (scanned 8:50 AM – 2:00 PM) and AN (entered by hand) columns.
+- Unscanned students stay blank. The system records check-in only.
+- Unknown roll numbers, or students whose batch has no class at that time, are logged but not marked.
+- Class columns are **newest first**. Today's class sits right after Department, in the master sheet and the HOD sheets.
+- Future classes are kept only in the Classes tab. Their column appears in the sheet on the day of the class.
 
 ## Updating
 
-1. Edit the files and commit.
-2. Change `VERSION` in `sw.js` (for example `kase-v1` → `kase-v2`) so phones load the new version instead of their saved copy.
+- **Website:** edit the files and commit, and change `VERSION` in `sw.js` (for example `kase-v2` → `kase-v3`) so phones load the new version.
+- **Backend:** after replacing the code in Apps Script, use **Deploy → Manage deployments → pencil icon → New version → Deploy**. This keeps the same web app URL.
 
 ## Hosting
 
-Testing runs on GitHub Pages (Settings → Pages → Deploy from branch `main`, folder `/`). The live version will move to kase.co.in. Copy these files there; nothing else changes.
+Testing runs on GitHub Pages (branch `main`, folder `/`). The live version will move to kase.co.in. Copy these files there; nothing else changes.
