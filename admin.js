@@ -54,8 +54,8 @@
     $('startWrap').hidden = field;
     $('start').required = !field;
     $('typeHint').textContent = field
-      ? 'Field day: scans from 8:50 AM to 2:00 PM mark FN, and scans from 2:00 PM to 4:00 PM mark AN. Both can also be typed by hand in the sheet.'
-      : 'The class runs 2 hours from the start time. Scans count from 20 minutes before the start.';
+      ? 'Field day: scans from 8:50 AM to 10:30 AM mark FN, and scans from 1:40 PM to 2:30 PM mark AN. Both can also be typed by hand in the sheet.'
+      : 'The class runs 2 hours from the start time. Scans count from 20 minutes before the start until 30 minutes after it.';
   }
   document.querySelectorAll('#batchSeg button').forEach((b) => b.addEventListener('click', () => { form.batch = b.dataset.v; setSeg('batchSeg', form.batch); }));
   document.querySelectorAll('#typeSeg button').forEach((b) => b.addEventListener('click', () => { form.type = b.dataset.v; setSeg('typeSeg', form.type); updateTypeUI(); }));

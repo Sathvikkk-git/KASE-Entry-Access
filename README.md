@@ -21,8 +21,8 @@ Live (testing): https://sathvikkk-git.github.io/KASE-Entry-Access/
 
 ## Key rules
 
-- A class lasts 2 hours. Scans count from 20 minutes before the start.
-- Field days get two columns, FN then AN. Scans from 8:50 AM to 2:00 PM mark FN, and scans from 2:00 PM to 4:00 PM mark AN. Both can also be typed by hand.
+- A class lasts 2 hours. Scans count from 20 minutes before the start until 30 minutes after it (a 2:00 PM class: 1:40 – 2:30 PM).
+- Field days get two columns, FN then AN. Scans from 8:50 AM to 10:30 AM mark FN, and scans from 1:40 PM to 2:30 PM mark AN. Both can also be typed by hand.
 - Unscanned students stay blank. The system records check-in only.
 - Unknown roll numbers, or students whose batch has no class at that time, are logged but not marked.
 - Class columns are **newest first**. Today's class sits right after Department, in the master sheet and the HOD sheets.

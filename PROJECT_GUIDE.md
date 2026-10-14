@@ -2,7 +2,9 @@
 
 This guide explains the whole project in plain language: what it does, how it works, how to set it up from nothing, how to use it every day, how to fix common problems, and what we plan to add later.
 
-Last updated: 14 October 2026 (daily copy into the Gamma, Delta and Epsilon batch tabs of the KASE register; 7 students added)
+Last updated: 14 October 2026 (scan times: classes until 30 min after start; field days 8:50–10:30 AM and 1:40–2:30 PM)
+
+Previous update: 14 October 2026 (daily copy into the Gamma, Delta and Epsilon batch tabs of the KASE register; 7 students added)
 
 ---
 
@@ -119,8 +121,8 @@ The receptionist does not need to know whether the student "should" be there. Th
 | Rule | Detail |
 |---|---|
 | Class length | A **Class** is 2 hours from its start time |
-| Early arrivals | Scans count from **20 minutes before** the start. For an 8:00 class, scans from 7:40 to 10:00 count. |
-| Field days | Two columns for the day, **FN first, then AN**. Scans from **8:50 AM up to 2:00 PM** mark **FN**. Scans from **2:00 PM to 4:00 PM** mark **AN**. A student scanned in the morning and again in the afternoon gets P in both. Scans after 4:00 PM aren't counted. Both columns can also be typed by hand. |
+| Scan times for a class | Scans count from **20 minutes before** the start until **30 minutes after** it. For a 10:00 class: 9:40 – 10:30. For a 2:00 PM class: 1:40 – 2:30 PM. Scans outside that time are saved in the Scans tab but don't mark P. |
+| Field days | Two columns for the day, **FN first, then AN**. Scans from **8:50 AM to 10:30 AM** mark **FN**. Scans from **1:40 PM to 2:30 PM** mark **AN** (20 minutes before the 2:00 PM afternoon start until 30 minutes after). A student scanned in the morning and again in the afternoon gets P in both. Scans between 10:30 AM and 1:40 PM, or after 2:30 PM, aren't counted. Both columns can also be typed by hand. |
 | College hours | 9:10 AM – 4:00 PM (used for field days) |
 | Back-to-back classes | If a scan falls inside two windows (e.g. 11:50 between a 10:00 and a 12:00 class), it goes to the class whose start time is nearest, here 12:00. |
 | Same batch, same time | The scheduler refuses two classes for one batch that overlap |
@@ -241,7 +243,7 @@ Open `website/config.js` and paste the Web app URL as `API_URL`.
 | Change a class's time/date/batch | Class scheduler → **Edit** on the class → change → **Save changes**. Attendance is recalculated automatically. |
 | Cancel a class | Class scheduler → **Cancel** → **Yes, cancel class** |
 | See past or cancelled classes | Tick **Past and cancelled** in the class list |
-| AN attendance on a field day | Scan students between 2:00 PM and 4:00 PM, or type **P** in the "Field AN" column of the batch tab in the master sheet. Both work together. |
+| AN attendance on a field day | Scan students between 1:40 PM and 2:30 PM, or type **P** in the "Field AN" column of the batch tab in the master sheet. Both work together. |
 | Change a password | In the master sheet: **Entry Access menu → Set coordinator / reception password**. Everyone using that account must log in again. Do this whenever someone leaves the KASE team. |
 | Change an HOD | In the **Departments** tab, change the email in **HOD Email**. The system removes the old person's access, gives the new person access, and emails them the link. The link itself never changes. |
 | Update HOD sheets right now | **Entry Access menu → Refresh HOD sheets now** (otherwise every 10 minutes) |
@@ -289,7 +291,7 @@ Before the real launch, also:
 
 | Problem | Likely cause and fix |
 |---|---|
-| Scan successful, but no P in the sheet | Check the **Scans** tab, Result column. "No class": the class wasn't created, the time/batch is wrong, or (on a field day) the scan was after 4:00 PM. Fix the class, and attendance recalculates automatically. "Unknown": roll number not in the list. "Too old": the phone held the scan for more than 7 days before uploading. |
+| Scan successful, but no P in the sheet | Check the **Scans** tab, Result column. "No class": the class wasn't created, the time/batch is wrong, or the scan was outside the scan times (a class: 20 min before to 30 min after the start; a field day: 8:50–10:30 AM and 1:40–2:30 PM). Fix the class, and attendance recalculates automatically. "Unknown": roll number not in the list. "Too old": the phone held the scan for more than 7 days before uploading. |
 | Phone says "X waiting to sync" for a long time | No internet, or the login expired. Tap **Sync now**. If it asks to log in, log in. Scans are kept. |
 | Barcode won't scan | Tilt to avoid glare. For scratched covers, use the Torch and Zoom controls and hold the card a bit further away. Otherwise take the card out of the cover, or use **Type roll number**. |
 | "Camera permission was denied" | Chrome → site settings → Camera → Allow, then tap Start scanning again. |
@@ -342,7 +344,7 @@ Before the real launch, also:
 
 Things we discussed or that would be natural next steps:
 
-Already done (12 Oct 2026): newest class first; future classes hidden until their day; single-read scanning with torch and zoom for scratched covers; **AN attendance by scan on field days** (2:00 PM – 4:00 PM); security review. 14 Oct 2026: daily copy into the KASE attendance register.
+Already done (12 Oct 2026): newest class first; future classes hidden until their day; single-read scanning with torch and zoom for scratched covers; **AN attendance by scan on field days**; (14 Oct) shorter scan times: classes 20 min before to 30 min after the start, field days 8:50–10:30 AM and 1:40–2:30 PM; security review. 14 Oct 2026: daily copy into the KASE attendance register.
 
 1. **Late marking.** Mark "L" instead of P after a cut-off (e.g. 15 minutes after start).
 2. **Automatic absent.** Fill blanks with "A" after a class ends.
@@ -361,7 +363,7 @@ Already done (12 Oct 2026): newest class first; future classes hidden until thei
 
 ## 16. How it was tested
 
-- The backend logic was tested against a simulated Google Sheet with **78 automatic checks**: logins, wrong passwords and lockout, forged and edited tokens, early arrivals, duplicates, unknown roll numbers, back-to-back classes, field-day FN and AN scanning (including the 2:00 PM and 4:00 PM edges), hand-typed AN entries being kept, editing/moving/cancelling classes, HOD email changes, newest-first ordering, future classes appearing on their day, formula-like input, back-dated scans and malformed requests.
+- The backend logic was tested against a simulated Google Sheet with **85 automatic checks**: the scan time limits (a scan 31 minutes after a class start, between field-day sessions, or after 2:30 PM is not counted; a 2:00–4:00 PM class counts 1:40–2:30 PM), logins, wrong passwords and lockout, forged and edited tokens, early arrivals, duplicates, unknown roll numbers, back-to-back classes, field-day FN and AN scanning (including the 2:00 PM and 4:00 PM edges), hand-typed AN entries being kept, editing/moving/cancelling classes, HOD email changes, newest-first ordering, future classes appearing on their day, formula-like input, back-dated scans and malformed requests.
 - The register copy was tested against a copy of the real KASE register file (all its tabs, headers and merged dates) with **39 checks**: nothing copied before 12:00 PM, no rows added to the register for students it doesn't have, per-batch start dates (Gamma and Epsilon from 13 Oct, Delta from 14 Oct), a hand-made 13 Oct column reused without changing the team's entries, only the Gamma, Delta and Epsilon batch tabs written (found by name, any capitals), the date written in row 1 and new days placed first in each tab's own style, no duplicate columns for a day, P/A written, register students outside the Anveshana list left blank, older attendance and other tabs untouched, roll-number typos matched, team corrections (including ML) kept, late arrivals upgraded at 4:15 PM, no extra runs, the next day placed in front, and nothing written before 14 Oct.
 - Both web pages were tested in a real browser on a phone-sized screen with **28 checks**: logging in, creating/editing/cancelling classes, the overlap error, scanning, the red failure for a wrong barcode, offline saving and later upload, typing a roll number, the torch and zoom controls, and that the security policy blocks nothing the pages need.
 - The barcode on a real KGR ID card was decoded from a photo, both with and without the plastic cover.
