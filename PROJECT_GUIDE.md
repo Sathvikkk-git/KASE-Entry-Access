@@ -16,7 +16,7 @@ This project does that:
 2. When a student arrives, the **receptionist** scans the barcode on their college ID card with a phone. The phone shows green (scan successful) or red (scan failed).
 3. The system writes **P** next to the student's name for that class in a **Google Sheet**.
 4. Each **HOD** has their own Google Sheet that shows only their department's students. It updates automatically.
-5. Every day at **11:30 AM** and **4:15 PM**, the attendance is also copied into the **KASE attendance register**, the team's own Google Sheet, in its usual layout.
+5. Every day at **12:00 PM** and **4:15 PM**, the attendance is also copied into the **KASE attendance register**, the team's own Google Sheet, in its usual layout.
 
 There are 165 students in three batches:
 
@@ -49,7 +49,7 @@ There are 165 students in three batches:
 3. **The phone uploads scans** every 30 seconds, and straight away when the internet comes back. Without internet it keeps the scans and uploads them later.
 4. **The system checks each scan**: is this roll number an Anveshana student, and does their batch have a class right now? If yes, it writes **P** in that class's column.
 5. **Every 10 minutes**, each HOD's sheet is refreshed with the latest attendance.
-6. **At 11:30 AM** the morning attendance (FN and classes that have started) is copied into the KASE register, and **at 4:15 PM** the afternoon (AN and later classes) plus any late morning arrivals.
+6. **At 12:00 PM** the morning attendance (FN and classes that have started) is copied into the KASE register, and **at 4:15 PM** the afternoon (AN and later classes) plus any late morning arrivals.
 
 The receptionist does not need to know whether the student "should" be there. They only scan. All decisions happen in the system.
 
@@ -72,7 +72,7 @@ The receptionist does not need to know whether the student "should" be there. Th
                      v  copied every 10 minutes
         Six department sheets (CSE, CSM, CSD, ECE, MECH, CIVIL)  ──►  HODs
                      
-        and, at 11:30 AM and 4:15 PM:
+        and, at 12:00 PM and 4:15 PM:
         KASE attendance register (the team's own sheet: Gamma batch, Delta batch, Epsilon batch tabs)
 ```
 
@@ -141,7 +141,7 @@ All times are India time.
 
 The KASE team keeps its own attendance register (a separate Google Sheet). The system copies attendance into it automatically, in the register's own style, so nobody has to retype it.
 
-**When:** shortly after **11:30 AM** and after **4:15 PM** every day (the 10-minute timer starts each copy within 10 minutes of those times). It can also be run any time from **Entry Access menu → Copy attendance to the KASE register now**.
+**When:** shortly after **12:00 PM** and after **4:15 PM** every day (the 10-minute timer starts each copy within 10 minutes of those times). It can also be run any time from **Entry Access menu → Copy attendance to the KASE register now**.
 
 **Where:** only the tabs **Gamma batch**, **Delta batch** and **Epsilon batch**, found by name (capital letters and extra spaces don't matter, so "Gamma Batch" works too). "Epsilon batch Wise", "Main sheet" and any other tab are never touched. Each new column gets the **date in row 1** (for example "10/14/2026 (Field Week)" on a field day, or "10/14/2026" for a class) and the session in row 2 (FN/AN or Morning/Afternoon, matching the tab, or the class time such as "11:20 - 01:20"). Register students who aren't in the Anveshana list are left blank. **Don't rename these three tabs**; if one is renamed, the copy skips it and says so.
 
@@ -159,7 +159,7 @@ If the team has already made a column for that day by hand (same date, same FN/A
 
 | Copy | What it fills |
 |---|---|
-| 11:30 AM | FN and any class that has started. Students not yet scanned get A. |
+| 12:00 PM | FN and any class that has started. Students not yet scanned get A. |
 | 4:15 PM | AN and later classes. Students who arrived late in the morning are upgraded from A to P. |
 
 **The team's own edits are safe.** A cell is only written if it is empty, or if it holds an **A that the system itself wrote** and the student was scanned later. If the team types anything (P, A, ML, a note), the system never changes it, even if it disagrees.
@@ -362,7 +362,7 @@ Already done (12 Oct 2026): newest class first; future classes hidden until thei
 ## 16. How it was tested
 
 - The backend logic was tested against a simulated Google Sheet with **78 automatic checks**: logins, wrong passwords and lockout, forged and edited tokens, early arrivals, duplicates, unknown roll numbers, back-to-back classes, field-day FN and AN scanning (including the 2:00 PM and 4:00 PM edges), hand-typed AN entries being kept, editing/moving/cancelling classes, HOD email changes, newest-first ordering, future classes appearing on their day, formula-like input, back-dated scans and malformed requests.
-- The register copy was tested against a copy of the real KASE register file (all its tabs, headers and merged dates) with **38 checks**: no rows added to the register for students it doesn't have, per-batch start dates (Gamma and Epsilon from 13 Oct, Delta from 14 Oct), a hand-made 13 Oct column reused without changing the team's entries, only the Gamma, Delta and Epsilon batch tabs written (found by name, any capitals), the date written in row 1 and new days placed first in each tab's own style, no duplicate columns for a day, P/A written, register students outside the Anveshana list left blank, older attendance and other tabs untouched, roll-number typos matched, team corrections (including ML) kept, late arrivals upgraded at 4:15 PM, no extra runs, the next day placed in front, and nothing written before 14 Oct.
+- The register copy was tested against a copy of the real KASE register file (all its tabs, headers and merged dates) with **39 checks**: nothing copied before 12:00 PM, no rows added to the register for students it doesn't have, per-batch start dates (Gamma and Epsilon from 13 Oct, Delta from 14 Oct), a hand-made 13 Oct column reused without changing the team's entries, only the Gamma, Delta and Epsilon batch tabs written (found by name, any capitals), the date written in row 1 and new days placed first in each tab's own style, no duplicate columns for a day, P/A written, register students outside the Anveshana list left blank, older attendance and other tabs untouched, roll-number typos matched, team corrections (including ML) kept, late arrivals upgraded at 4:15 PM, no extra runs, the next day placed in front, and nothing written before 14 Oct.
 - Both web pages were tested in a real browser on a phone-sized screen with **28 checks**: logging in, creating/editing/cancelling classes, the overlap error, scanning, the red failure for a wrong barcode, offline saving and later upload, typing a roll number, the torch and zoom controls, and that the security policy blocks nothing the pages need.
 - The barcode on a real KGR ID card was decoded from a photo, both with and without the plastic cover.
 

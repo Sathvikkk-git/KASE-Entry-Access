@@ -27,7 +27,7 @@ Live (testing): https://sathvikkk-git.github.io/KASE-Entry-Access/
 - Unknown roll numbers, or students whose batch has no class at that time, are logged but not marked.
 - Class columns are **newest first**. Today's class sits right after Department, in the master sheet and the HOD sheets.
 - Future classes are kept only in the Classes tab. Their column appears in the sheet on the day of the class.
-- Every day after 11:30 AM and 4:15 PM, attendance is also copied into the KASE attendance register (P / A), in the register's own layout. The team's own edits there are never changed.
+- Every day after 12:00 PM and 4:15 PM, attendance is also copied into the KASE attendance register (P / A), in the register's own layout. The team's own edits there are never changed.
 
 ## Updating
 
