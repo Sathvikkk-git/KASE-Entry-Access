@@ -2,7 +2,7 @@
 
 Barcode-based attendance for the **Anveshana** program at KASE.
 
-The receptionist scans each student's college ID card with a phone. The system marks **P** in a Google Sheet for that student's class, and each HOD sees their own department's attendance in a separate view-only sheet.
+The receptionist scans each student's college ID card with a phone. The system marks **P** in a Google Sheet for that student's class, and each HOD sees their own department's attendance in a separate view-only sheet. The day's attendance is also copied into the KASE team's attendance register.
 
 **Full guide:** [PROJECT_GUIDE.md](PROJECT_GUIDE.md) covers how it works, setup, daily use, troubleshooting and future plans.
 
@@ -27,6 +27,7 @@ Live (testing): https://sathvikkk-git.github.io/KASE-Entry-Access/
 - Unknown roll numbers, or students whose batch has no class at that time, are logged but not marked.
 - Class columns are **newest first**. Today's class sits right after Department, in the master sheet and the HOD sheets.
 - Future classes are kept only in the Classes tab. Their column appears in the sheet on the day of the class.
+- Every day after 11:30 AM and 4:15 PM, attendance is also copied into the KASE attendance register (P / A), in the register's own layout. The team's own edits there are never changed.
 
 ## Updating
 

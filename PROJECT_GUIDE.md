@@ -2,7 +2,7 @@
 
 This guide explains the whole project in plain language: what it does, how it works, how to set it up from nothing, how to use it every day, how to fix common problems, and what we plan to add later.
 
-Last updated: 12 October 2026 (afternoon scanning on field days, security review)
+Last updated: 14 October 2026 (daily copy into the KASE attendance register; 7 students added)
 
 ---
 
@@ -16,14 +16,15 @@ This project does that:
 2. When a student arrives, the **receptionist** scans the barcode on their college ID card with a phone. The phone shows green (scan successful) or red (scan failed).
 3. The system writes **P** next to the student's name for that class in a **Google Sheet**.
 4. Each **HOD** has their own Google Sheet that shows only their department's students. It updates automatically.
+5. Every day at **11:30 AM** and **4:15 PM**, the attendance is also copied into the **KASE attendance register**, the team's own Google Sheet, in its usual layout.
 
-There are 158 students in three batches:
+There are 165 students in three batches:
 
 | Batch | Departments | Students |
 |---|---|---|
-| Gamma | CSE | 65 |
-| Delta | CSM | 47 |
-| Epsilon | CSD, ECE, MECH, CIVIL | 46 |
+| Gamma | CSE | 67 |
+| Delta | CSM | 48 |
+| Epsilon | CSD, ECE, MECH, CIVIL | 50 |
 
 ---
 
@@ -34,6 +35,7 @@ There are 158 students in three batches:
 | Receptionist | Scanner page on a phone (`scan.html`) | Scans ID cards as students walk in |
 | KASE team | Class scheduler page (`admin.html`) | Creates, edits and cancels classes. One shared login. |
 | HODs | Their department's Google Sheet (view only) | Look at attendance and mark it in the department |
+| KASE team | The KASE attendance register (their existing Google Sheet) | Gets the day's P/A copied in automatically; can still correct it by hand |
 | Project admin (you) | The master Google Sheet and its Apps Script | Passwords, HOD emails, fixes |
 
 ---
@@ -47,6 +49,7 @@ There are 158 students in three batches:
 3. **The phone uploads scans** every 30 seconds, and straight away when the internet comes back. Without internet it keeps the scans and uploads them later.
 4. **The system checks each scan**: is this roll number an Anveshana student, and does their batch have a class right now? If yes, it writes **P** in that class's column.
 5. **Every 10 minutes**, each HOD's sheet is refreshed with the latest attendance.
+6. **At 11:30 AM** the morning attendance (FN and classes that have started) is copied into the KASE register, and **at 4:15 PM** the afternoon (AN and later classes) plus any late morning arrivals.
 
 The receptionist does not need to know whether the student "should" be there. They only scan. All decisions happen in the system.
 
@@ -67,10 +70,10 @@ The receptionist does not need to know whether the student "should" be there. Th
         Master Google Sheet "Entry Access"
                      |
                      v  copied every 10 minutes
-        Six department sheets (CSE, CSM, CSD, ECE, MECH, CIVIL)
-                     |
-                     v
-                   HODs
+        Six department sheets (CSE, CSM, CSD, ECE, MECH, CIVIL)  ──►  HODs
+                     
+        and, at 11:30 AM and 4:15 PM:
+        KASE attendance register (the team's own sheet: Gamma batch, Delta batch, Epsilon tab)
 ```
 
 | Part | What it is | Where it lives |
@@ -79,6 +82,7 @@ The receptionist does not need to know whether the student "should" be there. Th
 | Backend | The "brain". Checks logins, decides which class a scan belongs to, writes to the sheet. | Inside the master Google Sheet: **Extensions → Apps Script**. Copy in `backend/Code.gs`. |
 | Master sheet | All the data | Google Drive, owned by the account that ran setup |
 | Department sheets | One read-only copy per department for its HOD | Google Drive, same folder as the master sheet |
+| KASE attendance register | The team's existing attendance sheet; receives a daily copy | Google Drive (its own link). The account running the script must have **edit** access to it. |
 
 **Why this design:** Google Sheets is free and everyone already knows it. Apps Script runs free on Google's servers, so there's no server to rent or maintain. The website is plain HTML with no build step, so anyone can edit it.
 
@@ -133,6 +137,39 @@ All times are India time.
 
 ---
 
+## 6a. Daily copy into the KASE attendance register
+
+The KASE team keeps its own attendance register (a separate Google Sheet). The system copies attendance into it automatically, in the register's own style, so nobody has to retype it.
+
+**When:** shortly after **11:30 AM** and after **4:15 PM** every day (the 10-minute timer starts each copy within 10 minutes of those times). It can also be run any time from **Entry Access menu → Copy attendance to the KASE register now**.
+
+**Where:** the tabs **Gamma batch**, **Delta batch**, and the Epsilon tab from the link that was shared (tab id 1441744677, currently "Epsilon batch Wise"). The old "Epsilon batch" tab and "Main sheet" are never touched.
+
+**How it looks:**
+
+| | Field day | Class |
+|---|---|---|
+| Row 1 | `10/14/2026 (Field Week)`, merged over two columns | `10/14/2026` |
+| Row 2 | **FN / AN** (Epsilon) or **Morning / Afternoon** (Gamma, Delta), matching what each tab already uses | the time, e.g. `11:20 - 01:20` |
+| Position | Newest day first, right after the student details; older days move right. Within a day, earlier sessions are on the left. | same |
+
+If the team has already made a column for that day by hand (same date, same FN/AN or time label), the system fills that column instead of adding a new one.
+
+**What is written:** **P** if the student was scanned (or has P typed in our master sheet), **A** if not.
+
+| Copy | What it fills |
+|---|---|
+| 11:30 AM | FN and any class that has started. Students not yet scanned get A. |
+| 4:15 PM | AN and later classes. Students who arrived late in the morning are upgraded from A to P. |
+
+**The team's own edits are safe.** A cell is only written if it is empty, or if it holds an **A that the system itself wrote** and the student was scanned later. If the team types anything (P, A, ML, a note), the system never changes it, even if it disagrees.
+
+**Days covered:** today, plus a re-check of yesterday in case a copy was missed. Nothing before **14 October 2026** is ever written, because earlier days were kept by hand.
+
+**Students:** students in our system but missing from the register are added as new rows at the bottom of the right tab (roll number, name, department). Seven students who were in the register but not in our system were added to our system on 14 October, so their scans now count. Known spelling mistakes in the register's roll numbers (for example `26QM5AO417`, `26QM5A00414`) are matched to the right student.
+
+---
+
 ## 7. How the scanner works
 
 - The barcode on the KGR ID card is a **Code 128** barcode that contains only the roll number in capitals (for example `25QM1A0000`).
@@ -165,7 +202,10 @@ You only do this once. It's already done for the current test setup.
 4. Open the **Execution log** and **copy the two passwords** (coordinator and reception). They're shown only once.
 5. Optional: run **selfTest**. The log should say one real student "Marked" and a test roll number that is not in the list "Unknown".
 
-What setup does: creates all the tabs, loads the 158 students, creates the six department sheets, emails each HOD their link, creates the two logins, and sets up the 10-minute refresh. Running it again is safe. It won't duplicate anything.
+What setup does: creates all the tabs, loads the 165 students (and adds any missing ones to existing tabs), creates the six department sheets, emails each HOD their link, creates the two logins, and sets up the 10-minute refresh. Running it again is safe. It won't duplicate anything.
+
+### Step 2b – Give the script access to the KASE register
+The account that ran setup must be able to **edit** the KASE attendance register. If the register belongs to someone else, they share it with that account as **Editor**. The register's ID and tab names are at the top of Code.gs, under `REGISTER`.
 
 ### Step 3 – Publish the backend
 1. **Deploy → New deployment**, gear icon → **Web app**.
@@ -205,7 +245,9 @@ Open `website/config.js` and paste the Web app URL as `API_URL`.
 | Change a password | In the master sheet: **Entry Access menu → Set coordinator / reception password**. Everyone using that account must log in again. Do this whenever someone leaves the KASE team. |
 | Change an HOD | In the **Departments** tab, change the email in **HOD Email**. The system removes the old person's access, gives the new person access, and emails them the link. The link itself never changes. |
 | Update HOD sheets right now | **Entry Access menu → Refresh HOD sheets now** (otherwise every 10 minutes) |
-| Add a new student | Add a row at the bottom of the right batch tab: roll number (capitals), name, department. Order doesn't matter. |
+| Add a new student | Add a row at the bottom of the right batch tab: roll number (capitals), name, department. Order doesn't matter. The next register copy adds them to the register too. |
+| Copy to the KASE register right now | **Entry Access menu → Copy attendance to the KASE register now**. Safe to run any number of times. |
+| A register tab was renamed | Update `REGISTER.TABS` at the top of Code.gs (a tab name, or the gid number from the tab's link), then deploy a new version. |
 | Fix a wrong roll number | Edit it in the batch tab. Future scans will match. |
 | Mark someone present by hand | Type **P** in their cell. (Note: editing that class later recalculates its scan column from the Scans log, so a hand-typed P in a *scan* column can be cleared. AN columns are safe.) |
 
@@ -258,6 +300,7 @@ Before the real launch, also:
 | HOD sheet is out of date | Wait up to 10 minutes, or **Entry Access → Refresh HOD sheets now** |
 | Times look wrong | Check the reception phone's automatic date and time |
 | Website changes don't show on the phone | Bump `VERSION` in sw.js, upload again, and reopen the app twice |
+| KASE register not updated | Run **Entry Access → Copy attendance to the KASE register now** from the master sheet. A message says what was written for each batch. "Register tab not found" = a tab was renamed (see Everyday how-to). An access error = the script's account lost edit access to the register. |
 | Can't share the HOD sheet with a Gmail address | The college Google Workspace may block sharing outside the college. Ask the Workspace admin. |
 
 ---
@@ -280,7 +323,7 @@ Before the real launch, also:
 
 | Decision | Why |
 |---|---|
-| Google Sheets as the database | Free, familiar, easy to share with HODs, enough for 158 students |
+| Google Sheets as the database | Free, familiar, easy to share with HODs, enough for 165 students |
 | Apps Script as the backend | Free, runs on Google, no server to maintain |
 | Website hosted separately (not inside Apps Script) | Apps Script pages can't reliably use the camera and can't work offline |
 | GitHub Pages for testing, kase.co.in later | Free https hosting while we test |
@@ -290,6 +333,8 @@ Before the real launch, also:
 | Single read accepted (changed from two) | Scratched covers rarely give two clean reads in a row. Code 128's check digit and the roll-number pattern already block misreads. |
 | Blank instead of "A" | HODs asked only for presence for now |
 | One shared coordinator login | Requested by the KASE team. Change the password when people leave. |
+| Register copy only fills empty cells and its own A's | The register is the team's official record; their corrections must always win. |
+| A for absent in the register, blank in our sheet | The register already used A; our sheet only records presence. |
 
 ---
 
@@ -297,7 +342,7 @@ Before the real launch, also:
 
 Things we discussed or that would be natural next steps:
 
-Already done (12 Oct 2026): newest class first; future classes hidden until their day; single-read scanning with torch and zoom for scratched covers; **AN attendance by scan on field days** (2:00 PM – 4:00 PM); security review.
+Already done (12 Oct 2026): newest class first; future classes hidden until their day; single-read scanning with torch and zoom for scratched covers; **AN attendance by scan on field days** (2:00 PM – 4:00 PM); security review. 14 Oct 2026: daily copy into the KASE attendance register.
 
 1. **Late marking.** Mark "L" instead of P after a cut-off (e.g. 15 minutes after start).
 2. **Automatic absent.** Fill blanks with "A" after a class ends.
@@ -317,6 +362,7 @@ Already done (12 Oct 2026): newest class first; future classes hidden until thei
 ## 16. How it was tested
 
 - The backend logic was tested against a simulated Google Sheet with **78 automatic checks**: logins, wrong passwords and lockout, forged and edited tokens, early arrivals, duplicates, unknown roll numbers, back-to-back classes, field-day FN and AN scanning (including the 2:00 PM and 4:00 PM edges), hand-typed AN entries being kept, editing/moving/cancelling classes, HOD email changes, newest-first ordering, future classes appearing on their day, formula-like input, back-dated scans and malformed requests.
+- The register copy was tested against a copy of the real KASE register file (all its tabs, headers and merged dates) with **31 checks**: new days placed first in each tab's own style, the team's existing 14 Oct columns reused instead of duplicated, P/A written, older attendance and other tabs untouched, missing students added, roll-number typos matched, team corrections (including ML) kept, late arrivals upgraded at 4:15 PM, no extra runs, the next day placed in front, and nothing written before 14 Oct.
 - Both web pages were tested in a real browser on a phone-sized screen with **28 checks**: logging in, creating/editing/cancelling classes, the overlap error, scanning, the red failure for a wrong barcode, offline saving and later upload, typing a roll number, the torch and zoom controls, and that the security policy blocks nothing the pages need.
 - The barcode on a real KGR ID card was decoded from a photo, both with and without the plastic cover.
 
@@ -337,6 +383,6 @@ The first live test on the reception phone and the real Google Sheet is still th
 | `website/common.js`, `style.css` | Shared helpers and styling |
 | `website/sw.js` | Makes the scanner work offline |
 | `backend/Code.gs` | The Apps Script backend (contains student names, keep private) |
-| `data/Anveshana_2026_students_by_batch.xlsx` | Cleaned student list |
+| `data/Anveshana_2026_students_by_batch.xlsx` | Cleaned student list (165 students) |
 
 Architecture document: https://claude.ai/code/artifact/d8b5e20d-94e2-4f30-9625-1b7ce21df1b7
