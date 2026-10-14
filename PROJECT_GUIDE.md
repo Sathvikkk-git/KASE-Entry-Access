@@ -2,7 +2,7 @@
 
 This guide explains the whole project in plain language: what it does, how it works, how to set it up from nothing, how to use it every day, how to fix common problems, and what we plan to add later.
 
-Last updated: 14 October 2026 (daily copy into the KASE attendance register; 7 students added)
+Last updated: 14 October 2026 (daily copy into the Gamma, Delta and Epsilon batch tabs of the KASE register; 7 students added)
 
 ---
 
@@ -73,7 +73,7 @@ The receptionist does not need to know whether the student "should" be there. Th
         Six department sheets (CSE, CSM, CSD, ECE, MECH, CIVIL)  ──►  HODs
                      
         and, at 11:30 AM and 4:15 PM:
-        KASE attendance register (the team's own sheet: Gamma batch, Delta batch, Epsilon tab)
+        KASE attendance register (the team's own sheet: Gamma batch, Delta batch, Epsilon batch tabs)
 ```
 
 | Part | What it is | Where it lives |
@@ -143,7 +143,7 @@ The KASE team keeps its own attendance register (a separate Google Sheet). The s
 
 **When:** shortly after **11:30 AM** and after **4:15 PM** every day (the 10-minute timer starts each copy within 10 minutes of those times). It can also be run any time from **Entry Access menu → Copy attendance to the KASE register now**.
 
-**Where:** the tabs **Gamma batch**, **Delta batch**, and the Epsilon tab from the link that was shared (tab id 1441744677, currently "Epsilon batch Wise"). The old "Epsilon batch" tab and "Main sheet" are never touched.
+**Where:** only the tabs **Gamma batch**, **Delta batch** and **Epsilon batch**, found by name (capital letters and extra spaces don't matter, so "Gamma Batch" works too). "Epsilon batch Wise", "Main sheet" and any other tab are never touched. Each new column gets the **date in row 1** (for example "10/14/2026 (Field Week)" on a field day, or "10/14/2026" for a class) and the session in row 2 (FN/AN or Morning/Afternoon, matching the tab, or the class time such as "11:20 - 01:20"). Register students who aren't in the Anveshana list are left blank. **Don't rename these three tabs**; if one is renamed, the copy skips it and says so.
 
 **How it looks:**
 
@@ -247,7 +247,7 @@ Open `website/config.js` and paste the Web app URL as `API_URL`.
 | Update HOD sheets right now | **Entry Access menu → Refresh HOD sheets now** (otherwise every 10 minutes) |
 | Add a new student | Add a row at the bottom of the right batch tab: roll number (capitals), name, department. Order doesn't matter. The next register copy adds them to the register too. |
 | Copy to the KASE register right now | **Entry Access menu → Copy attendance to the KASE register now**. Safe to run any number of times. |
-| A register tab was renamed | Update `REGISTER.TABS` at the top of Code.gs (a tab name, or the gid number from the tab's link), then deploy a new version. |
+| A register tab was renamed | Rename it back, or update `REGISTER.TABS` at the top of Code.gs with the new name, then deploy a new version. |
 | Fix a wrong roll number | Edit it in the batch tab. Future scans will match. |
 | Mark someone present by hand | Type **P** in their cell. (Note: editing that class later recalculates its scan column from the Scans log, so a hand-typed P in a *scan* column can be cleared. AN columns are safe.) |
 
@@ -362,7 +362,7 @@ Already done (12 Oct 2026): newest class first; future classes hidden until thei
 ## 16. How it was tested
 
 - The backend logic was tested against a simulated Google Sheet with **78 automatic checks**: logins, wrong passwords and lockout, forged and edited tokens, early arrivals, duplicates, unknown roll numbers, back-to-back classes, field-day FN and AN scanning (including the 2:00 PM and 4:00 PM edges), hand-typed AN entries being kept, editing/moving/cancelling classes, HOD email changes, newest-first ordering, future classes appearing on their day, formula-like input, back-dated scans and malformed requests.
-- The register copy was tested against a copy of the real KASE register file (all its tabs, headers and merged dates) with **31 checks**: new days placed first in each tab's own style, the team's existing 14 Oct columns reused instead of duplicated, P/A written, older attendance and other tabs untouched, missing students added, roll-number typos matched, team corrections (including ML) kept, late arrivals upgraded at 4:15 PM, no extra runs, the next day placed in front, and nothing written before 14 Oct.
+- The register copy was tested against a copy of the real KASE register file (all its tabs, headers and merged dates) with **32 checks**: only the Gamma, Delta and Epsilon batch tabs written (found by name, any capitals), the date written in row 1 and new days placed first in each tab's own style, no duplicate columns for a day, P/A written, register students outside the Anveshana list left blank, older attendance and other tabs untouched, missing students added, roll-number typos matched, team corrections (including ML) kept, late arrivals upgraded at 4:15 PM, no extra runs, the next day placed in front, and nothing written before 14 Oct.
 - Both web pages were tested in a real browser on a phone-sized screen with **28 checks**: logging in, creating/editing/cancelling classes, the overlap error, scanning, the red failure for a wrong barcode, offline saving and later upload, typing a roll number, the torch and zoom controls, and that the security policy blocks nothing the pages need.
 - The barcode on a real KGR ID card was decoded from a photo, both with and without the plastic cover.
 
