@@ -166,7 +166,7 @@ If the team has already made a column for that day by hand (same date, same FN/A
 
 **Days covered:** today, plus a re-check of yesterday in case a copy was missed. Nothing before **14 October 2026** is ever written, because earlier days were kept by hand.
 
-**Students:** students in our system but missing from the register are added as new rows at the bottom of the right tab (roll number, name, department). Seven students who were in the register but not in our system were added to our system on 14 October, so their scans now count. Known spelling mistakes in the register's roll numbers (for example `26QM5AO417`, `26QM5A00414`) are matched to the right student.
+**Students:** students in our system but missing from the register are added as new rows at the bottom of the right tab (roll number, name, department). Seven students who were in the register but not in our system were added to our system on 14 October, so their scans now count. Known spelling mistakes in the register's roll numbers (a letter O typed instead of a zero, or an extra zero) are matched to the right student.
 
 ---
 
