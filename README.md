@@ -15,7 +15,7 @@ The **website** and the **documentation**. The backend script (`Code.gs`), the s
 | [START_HERE.md](START_HERE.md) | What to read first, and what to attach when opening this project in a new chat |
 | [PROJECT_GUIDE.md](PROJECT_GUIDE.md) | How the system works, setup, daily use, troubleshooting |
 | [DEVELOPER_NOTES.md](DEVELOPER_NOTES.md) | How the code is built: data model, settings, gotchas |
-| [tests/README.md](tests/README.md) | The 152 automatic checks and how to run them |
+| [tests/README.md](tests/README.md) | The 181 automatic checks and how to run them |
 
 | Page | Who uses it |
 |---|---|
@@ -30,6 +30,7 @@ Live (testing): https://sathvikkk-git.github.io/KASE-Entry-Access/
 
 - A class lasts 2 hours. Scans count from 20 minutes before the start until 30 minutes after it (a 2:00 PM class: 1:40 – 2:30 PM).
 - Field days get two columns, FN then AN. Scans from 8:50 AM to 10:30 AM mark FN, and scans from 1:40 PM to 2:30 PM mark AN. Both can also be typed by hand.
+- Those closing times are only the defaults. Each class can be given its own **scan close time** in the scheduler, also afterwards for a day that has already passed — that day's attendance is then recalculated from the saved scans, in the attendance sheet, the HOD sheets and the KASE register. A shorter close time is refused if it would take away a P someone already has.
 - Unscanned students stay blank. The system records check-in only.
 - Unknown roll numbers, or students whose batch has no class at that time, are logged but not marked.
 - Class columns are **newest first**. Today's class sits right after Department, in the master sheet and the HOD sheets.

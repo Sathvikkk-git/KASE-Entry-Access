@@ -2,7 +2,7 @@
 
 How the code is built, for anyone (person or AI) changing it. `PROJECT_GUIDE.md` covers what the system does and how to operate it; this covers how it works inside.
 
-Last updated: 27 October 2026
+Last updated: 27 October 2026 (per-class scan close times)
 
 ---
 
@@ -40,7 +40,7 @@ Three pieces, one data store:
 | Tab | Row 1 | Row 2 | Rows 3+ |
 |---|---|---|---|
 | `Gamma`, `Delta`, `Epsilon` | Roll Number, Name, Department, then a human label per class column | **hidden: the class ID of each column** | one student per row; `P` or blank |
-| `Classes` | headers | — | every class ever made |
+| `Classes` | headers | — | every class ever made, with its own scan close time(s) |
 | `Scans` | headers | — | every scan ever received |
 | `Users` (hidden sheet) | headers | — | two accounts, salted hashes |
 | `Departments` | headers | — | one row per department |
@@ -88,8 +88,10 @@ The phone's green tick means *"the barcode was read and stored"*, nothing more. 
 
 | Class type | Window(s) |
 |---|---|
-| `Class` | `start - EARLY_MIN` to `start + LATE_MIN` (20 min before to 30 min after) |
-| `Field` | FN: `09:10 - 20min` to `FIELD_FN_LAST` (8:50–10:30). AN: `FIELD_AN_START - 20min` to `FIELD_AN_LAST` (1:40–2:30 PM) |
+| `Class` | `start - EARLY_MIN` to `closeOf_(c)` (default `start + LATE_MIN`, so 20 min before to 30 min after) |
+| `Field` | FN: `09:10 - 20min` to `closeOf_(c)` (default `FIELD_FN_LAST`, 8:50–10:30). AN: `FIELD_AN_START - 20min` to `closeAnOf_(c)` (default `FIELD_AN_LAST`, 1:40–2:30 PM) |
+
+The close times live on the class, in the `Scans Close` and `AN Scans Close` columns of the `Classes` tab. `closeOf_(c)` / `closeAnOf_(c)` return the class's own value, or `defaultClose_(c)` / `defaultCloseAn_(c)` when the cell is empty — which is what every row written before this feature looks like, so old classes keep the old behaviour with no migration of data. `classesSheet_()` adds the two headers the first time it runs against a sheet that predates them. `normalizeClass_` validates them: a class between its start and its end, FN between 09:10 and `fnCloseLimit_()` (1:39 PM, so FN cannot run into the AN window), AN no earlier than `FIELD_AN_START`.
 
 `at` is the nominal start, used only to pick the nearest class when two windows overlap. `windowAt_(c, ts)` returns the window containing `ts`, or null.
 
@@ -97,7 +99,9 @@ A class's **scan window** and its **span** are different things. `span_(c)` is t
 
 ### recompute_
 
-`recompute_(c)` rebuilds a class's columns from the whole `Scans` log. It runs whenever a class is created or edited, which is why scans taken *before* a class existed still count.
+`recompute_(c)` rebuilds a class's columns from the whole `Scans` log. It runs whenever a class is created or edited, which is why scans taken *before* a class existed still count, and why changing an old day's close time is enough to recalculate that day.
+
+`recompute_(c, true)` is a dry run: it writes nothing and returns `{marked, removed}`, where `removed` counts students who have a `P` now and would not after the change. `checkCloseShrink_` uses it to refuse a shorter close time that would take attendance away — the only edit the scheduler refuses on those grounds. Every other edit (date, time, batch) keeps its old behaviour of simply rebuilding the column.
 
 One asymmetry worth knowing: for a `Class` column and for `#FN`, the column is rebuilt from scans only, so a hand-typed `P` there can be wiped. For `#AN`, existing values are read first and kept, then scanned students are added. That was deliberate: the team types AN by hand.
 
@@ -144,6 +148,8 @@ The most intricate part, because it writes into a file **the team also edits by 
 
 `ADD_MISSING_STUDENTS` is `false`: students missing from the register are skipped there, not added.
 
+`copyToRegister_(opts)` takes `opts.days` and `opts.batches`, which `registerSync_` uses after a class is created or edited: the affected day goes into the register straight away, even when it is older than `CATCH_UP_DAYS`. A failure there is logged, never thrown, so the register can never fail a save. `REGISTER.A_LIST_DAYS` (30) is how long the `rega_*` properties are kept, which is how long an `A` the script wrote can still become a `P`; past that, only empty cells get filled.
+
 ---
 
 ## 6. Settings
@@ -157,13 +163,15 @@ Almost everything tunable is in two blocks at the top of `Code.gs`.
 | `EARLY_MIN` / `LATE_MIN` | 20 / 30 | Scan window around a class start |
 | `CLASS_MIN` | 120 | How long a class lasts (its span, not its scan window) |
 | `FIELD_FROM` / `FIELD_TO` | 09:10 / 16:00 | College hours, used for a field day's span |
-| `FIELD_FN_LAST` | 10:30 | FN scans close |
-| `FIELD_AN_START` / `FIELD_AN_LAST` | 14:00 / 14:30 | AN scans open 20 min before this, and close |
+| `FIELD_FN_LAST` | 10:30 | **Default** FN close time |
+| `FIELD_AN_START` / `FIELD_AN_LAST` | 14:00 / 14:30 | AN scans open 20 min before the first; the second is the **default** AN close time |
 | `MAX_SCAN_AGE_DAYS` | 7 | Older uploads refused |
 | `TOKEN_HOURS` | 12 / 720 | Session length per role |
 | `MAX_LOGIN_FAILS` | 10 | Then a 15-minute lockout |
 
-`REGISTER` — the copy into the team's file: `ID`, `TABS`, `RUNS`, `START_DATE` (per batch), `CATCH_UP_DAYS`, `ADD_MISSING_STUDENTS`, `ROLL_FIX`.
+`LATE_MIN`, `FIELD_FN_LAST` and `FIELD_AN_LAST` are only the defaults the scheduler fills in. Each class stores its own close time, so changing them in `CFG` changes new classes and any class whose close cells are empty, not classes that already carry a time of their own.
+
+`REGISTER` — the copy into the team's file: `ID`, `TABS`, `RUNS`, `START_DATE` (per batch), `CATCH_UP_DAYS`, `A_LIST_DAYS`, `ADD_MISSING_STUDENTS`, `ROLL_FIX`.
 
 `STUDENTS` is a 165-row array of `[roll, name, department]` built into the file. `setup()` loads it into the batch tabs and `addMissingStudents_` adds any that are missing, so re-running `setup()` is safe.
 
@@ -185,7 +193,8 @@ Almost everything tunable is in two blocks at the top of `Code.gs`.
 
 | Want to | Do |
 |---|---|
-| Change a scan window | Edit `CFG`. Add a test at the new edge. |
+| Change one class's scan window | Nothing to deploy — set its close time in the scheduler. Works for a past day too. |
+| Change the default scan window | Edit `CFG`. Add a test at the new edge. Classes that already carry their own close time are unaffected. |
 | Change register copy times | `REGISTER.RUNS`. The timer is every 10 minutes, so a run starts within 10 minutes of the time. |
 | Add a column to the register | `registerSessions_` returns the sessions of a class; add one and give it a row-2 label. |
 | Add an API action | A `case` in `route_` with the right role, plus a client call in `common.js`. |

@@ -4,9 +4,9 @@ This guide explains the whole project in plain language: what it does, how it wo
 
 **Changing the code?** Read `DEVELOPER_NOTES.md` for how it is built, and `tests/README.md` for how to check a change before deploying. `START_HERE.md` says which files to open first.
 
-Last updated: 14 October 2026 (scan times: classes until 30 min after start; field days 8:50–10:30 AM and 1:40–2:30 PM)
+Last updated: 27 October 2026 (each class can set its own scan close time, including for a day that has already passed)
 
-Previous update: 14 October 2026 (daily copy into the Gamma, Delta and Epsilon batch tabs of the KASE register; 7 students added)
+Previous update: 14 October 2026 (scan times: classes until 30 min after start; field days 8:50–10:30 AM and 1:40–2:30 PM)
 
 ---
 
@@ -123,8 +123,10 @@ The receptionist does not need to know whether the student "should" be there. Th
 | Rule | Detail |
 |---|---|
 | Class length | A **Class** is 2 hours from its start time |
-| Scan times for a class | Scans count from **20 minutes before** the start until **30 minutes after** it. For a 10:00 class: 9:40 – 10:30. For a 2:00 PM class: 1:40 – 2:30 PM. Scans outside that time are saved in the Scans tab but don't mark P. |
-| Field days | Two columns for the day, **FN first, then AN**. Scans from **8:50 AM to 10:30 AM** mark **FN**. Scans from **1:40 PM to 2:30 PM** mark **AN** (20 minutes before the 2:00 PM afternoon start until 30 minutes after). A student scanned in the morning and again in the afternoon gets P in both. Scans between 10:30 AM and 1:40 PM, or after 2:30 PM, aren't counted. Both columns can also be typed by hand. |
+| Scan times for a class | Scans count from **20 minutes before** the start until the class's **close time**, which is **30 minutes after** the start unless you change it. For a 10:00 class: 9:40 – 10:30. For a 2:00 PM class: 1:40 – 2:30 PM. Scans outside that time are saved in the Scans tab but don't mark P. |
+| Field days | Two columns for the day, **FN first, then AN**. Scans from **8:50 AM** until the field day's **FN close time** (10:30 AM unless you change it) mark **FN**. Scans from **1:40 PM** until its **AN close time** (2:30 PM unless you change it) mark **AN**. A student scanned in the morning and again in the afternoon gets P in both. Scans outside those two windows aren't counted. Both columns can also be typed by hand. |
+| Changing when scans close | Set it on the class in the scheduler, when creating the class or by editing it later. **It works on a day that has already passed too**: attendance for that day is recalculated from the saved scans, and the attendance sheet, the HOD sheets and the KASE register are all brought up to date. A **later** close time can only add students. A **shorter** one is refused if it would take away a P that someone already has — mark those students by hand first if you really want the shorter time. |
+| Limits on the close time | A class: no earlier than its start, no later than its end (2 hours after the start). A field day's FN: no earlier than 9:10 AM, and by 1:39 PM at the latest, so it never runs into the afternoon. A field day's AN: no earlier than 2:00 PM. |
 | College hours | 9:10 AM – 4:00 PM (used for field days) |
 | Back-to-back classes | If a scan falls inside two windows (e.g. 11:50 between a 10:00 and a 12:00 class), it goes to the class whose start time is nearest, here 12:00. |
 | Same batch, same time | The scheduler refuses two classes for one batch that overlap |
@@ -168,7 +170,7 @@ If the team has already made a column for that day by hand (same date, same FN/A
 
 **The team's own edits are safe.** A cell is only written if it is empty, or if it holds an **A that the system itself wrote** and the student was scanned later. If the team types anything (P, A, ML, a note), the system never changes it, even if it disagrees.
 
-**Days covered:** today, plus a re-check of the last 3 days in case a copy was missed. Each batch has its own first day: **Gamma and Epsilon from 13 October 2026**, **Delta from 14 October 2026**. Nothing before those dates is ever written, because earlier days were kept by hand. When a day already has a column in the register (made by hand), it is reused and only its **empty** cells are filled. These dates are `REGISTER.START_DATE` at the top of Code.gs.
+**Days covered:** today, plus a re-check of the last 3 days in case a copy was missed. An older day is also copied the moment you create or edit a class on that day, which is how a corrected close time reaches the register. For up to **30 days** the script remembers which **A**s it wrote itself, so a student who turns out to have been present is changed from A to P; beyond 30 days it can only fill cells that are still empty. Each batch has its own first day: **Gamma and Epsilon from 13 October 2026**, **Delta from 14 October 2026**. Nothing before those dates is ever written, because earlier days were kept by hand. When a day already has a column in the register (made by hand), it is reused and only its **empty** cells are filled. These dates are `REGISTER.START_DATE` at the top of Code.gs.
 
 **Students:** students are matched by **roll number**, not name. The script **never adds rows** to the register: a student who is in our system but not in the register is simply skipped there (the team can add them by hand, and from the next copy they get P/A). Register students who aren't in our system are left blank. (To let the script add missing students as new rows, set `REGISTER.ADD_MISSING_STUDENTS` to `true` in Code.gs.) Seven students who were in the register but not in our system were added to our system on 14 October, so their scans now count. Known spelling mistakes in the register's roll numbers (a letter O typed instead of a zero, or an extra zero) are matched to the right student.
 
@@ -243,6 +245,8 @@ Open `website/config.js` and paste the Web app URL as `API_URL`.
 |---|---|
 | Schedule a class | Class scheduler → choose batch, type, date, start time → **Create class** |
 | Change a class's time/date/batch | Class scheduler → **Edit** on the class → change → **Save changes**. Attendance is recalculated automatically. |
+| Keep scanning open longer on a field day | In the scheduler, set **FN scans close at** (or **AN scans close at**) when creating the field day. The usual 10:30 AM and 2:30 PM are filled in for you. |
+| Fix the close time of a day that has passed | Class scheduler → tick **Past and cancelled** → **Edit** that class → change the close time → **Save changes**. That day is recalculated from the saved scans in the attendance sheet, the HOD sheets and the KASE register. |
 | Cancel a class | Class scheduler → **Cancel** → **Yes, cancel class** |
 | See past or cancelled classes | Tick **Past and cancelled** in the class list |
 | AN attendance on a field day | Scan students between 1:40 PM and 2:30 PM, or type **P** in the "Field AN" column of the batch tab in the master sheet. Both work together. |
@@ -346,6 +350,8 @@ Before the real launch, also:
 
 Things we discussed or that would be natural next steps:
 
+Already done (27 Oct 2026): each class carries its own scan close time, editable afterwards, including for days that have already passed.
+
 Already done (12 Oct 2026): newest class first; future classes hidden until their day; single-read scanning with torch and zoom for scratched covers; **AN attendance by scan on field days**; (14 Oct) shorter scan times: classes 20 min before to 30 min after the start, field days 8:50–10:30 AM and 1:40–2:30 PM; security review. 14 Oct 2026: daily copy into the KASE attendance register.
 
 1. **Late marking.** Mark "L" instead of P after a cut-off (e.g. 15 minutes after start).
@@ -371,13 +377,13 @@ The tests live in `tests/` and run on your own computer. Nothing in them touches
 sh tests/run_all.sh
 ```
 
-**152 checks in three suites:**
+**181 checks in three suites:**
 
 | Suite | Checks | Covers |
 |---|---|---|
-| `mock_test.js` | 85 | The backend against a fake Google Apps Script: logins and lockout, forged tokens, scan windows and their exact edges, field-day FN and AN, duplicates, unknown roll numbers, back-dated scans, creating/editing/cancelling classes, newest-first columns, future classes, HOD sheets. |
+| `mock_test.js` | 106 | The backend against a fake Google Apps Script: logins and lockout, forged tokens, scan windows and their exact edges, field-day FN and AN, duplicates, unknown roll numbers, back-dated scans, creating/editing/cancelling classes, newest-first columns, future classes, HOD sheets. |
 | `register_test.js` | 39 | The copy into the KASE register, against a snapshot of the real file with all its tabs, headers and odd dates. |
-| `e2e.js` | 28 | The scanner and scheduler pages in a real browser at phone size, including offline saving and later upload. |
+| `e2e.js` | 36 | The scanner and scheduler pages in a real browser at phone size, including offline saving and later upload. |
 
 The barcode on a real KGR ID card was also decoded from a photo, with and without the plastic cover.
 

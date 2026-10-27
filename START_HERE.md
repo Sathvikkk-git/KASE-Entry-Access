@@ -26,7 +26,7 @@ A useful opening message: *"Here is my KASE attendance project. Read START_HERE.
 sh tests/run_all.sh
 ```
 
-Three suites, 152 checks, none of which touch Google. They catch the mistakes that would otherwise show up as missing attendance during a real class. If a suite will not run in your environment, say so rather than skipping it quietly.
+Three suites, 181 checks, none of which touch Google. They catch the mistakes that would otherwise show up as missing attendance during a real class. If a suite will not run in your environment, say so rather than skipping it quietly.
 
 ## What is where
 
@@ -54,6 +54,7 @@ KASE Entry Access/
 ## Current state (27 October 2026)
 
 - Live and running: scanning, the class scheduler, 6 HOD sheets, and a twice-daily copy into the KASE team's own attendance register.
+- Each class carries its own scan close time (27 Oct), editable afterwards — including for a day that has already passed, which recalculates that day everywhere.
 - 165 students in three batches: Gamma (CSE), Delta (CSM), Epsilon (CSD, ECE, MECH, CIVIL).
 - Website hosted on GitHub Pages for testing; the move to kase.co.in is still to do (section 11 of the guide).
 - Still open before a full launch: real HOD emails in place of the test address, new passwords, and ideally moving the sheet to a KASE Google account rather than a personal one.

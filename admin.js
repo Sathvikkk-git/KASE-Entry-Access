@@ -9,6 +9,22 @@
   let confirmId = null;        // class awaiting cancel confirmation
   let filter = 'All';
   const form = { batch: null, type: 'Class' };
+  let closeTouched = false;    // true once the close times are set by hand, so defaults stop following
+
+  // The same defaults as CFG in the backend. A class carries its own close time; these only fill
+  // the form in, and an empty field still means "use the default".
+  const DEF = { LATE_MIN: 30, CLASS_MIN: 120, FIELD_FROM: '09:10', FN_LAST: '10:30', AN_START: '14:00', AN_LAST: '14:30' };
+  const addMin = (hhmm, min) => {
+    const t = Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3, 5)) + min;
+    return ('0' + Math.floor(t / 60)).slice(-2) + ':' + ('0' + (t % 60)).slice(-2);
+  };
+  const defaultClose = () => (form.type === 'Field' ? DEF.FN_LAST
+    : (/^\d\d:\d\d$/.test($('start').value) ? addMin($('start').value, DEF.LATE_MIN) : ''));
+  function fillCloseDefaults() {
+    if (closeTouched) return;
+    $('close').value = defaultClose();
+    $('closeAn').value = form.type === 'Field' ? DEF.AN_LAST : '';
+  }
 
   function toast(text) {
     const t = $('toast'); t.textContent = text; t.hidden = false;
@@ -53,18 +69,26 @@
     const field = form.type === 'Field';
     $('startWrap').hidden = field;
     $('start').required = !field;
+    $('closeAnWrap').hidden = !field;
+    $('closeLabel').textContent = field ? 'FN scans close at' : 'Scans close at';
     $('typeHint').textContent = field
-      ? 'Field day: scans from 8:50 AM to 10:30 AM mark FN, and scans from 1:40 PM to 2:30 PM mark AN. Both can also be typed by hand in the sheet.'
-      : 'The class runs 2 hours from the start time. Scans count from 20 minutes before the start until 30 minutes after it.';
+      ? 'Field day: FN scans run from 8:50 AM until the FN close time, and AN scans from 1:40 PM until the AN close time. '
+        + 'Leave the close times as they are for the usual 10:30 AM and 2:30 PM. Both columns can also be typed by hand in the sheet.'
+      : 'The class runs 2 hours from the start time. Scans count from 20 minutes before the start until the close time, '
+        + 'which is 30 minutes after the start unless you change it.';
+    fillCloseDefaults();
   }
   document.querySelectorAll('#batchSeg button').forEach((b) => b.addEventListener('click', () => { form.batch = b.dataset.v; setSeg('batchSeg', form.batch); }));
   document.querySelectorAll('#typeSeg button').forEach((b) => b.addEventListener('click', () => { form.type = b.dataset.v; setSeg('typeSeg', form.type); updateTypeUI(); }));
+  $('start').addEventListener('input', fillCloseDefaults);
+  ['close', 'closeAn'].forEach((id) => $(id).addEventListener('input', () => { closeTouched = true; }));
 
   function resetForm() {
     editing = null;
     form.batch = null; form.type = 'Class';
     setSeg('batchSeg', null); setSeg('typeSeg', 'Class');
     $('date').value = KASE.todayIST(); $('start').value = '';
+    closeTouched = false; $('close').value = ''; $('closeAn').value = '';
     $('formTitle').textContent = 'Schedule a class'; $('saveBtn').textContent = 'Create class';
     $('stopEdit').hidden = true; $('editBanner').hidden = true;
     formMsg(''); updateTypeUI();
@@ -74,11 +98,14 @@
     form.batch = c.batch; form.type = c.type;
     setSeg('batchSeg', c.batch); setSeg('typeSeg', c.type);
     $('date').value = c.date; $('start').value = c.type === 'Class' ? c.start : '';
+    closeTouched = true;                 // keep this class's own close times, not the defaults
+    $('close').value = c.close || ''; $('closeAn').value = c.type === 'Field' ? (c.closeAn || '') : '';
     $('formTitle').textContent = 'Edit class'; $('saveBtn').textContent = 'Save changes';
     $('stopEdit').hidden = false;
     $('editBanner').hidden = false;
     $('editBanner').textContent = 'Editing ' + c.batch + ' · ' + KASE.niceDate(c.date) + (c.type === 'Field' ? ' · Field day' : ' · ' + KASE.time12(c.start)) +
-      '. Attendance is recalculated from the scans after you save.';
+      '. Attendance for that day is recalculated from the scans after you save, in the attendance sheet, ' +
+      'the HOD sheets and the KASE register.';
     formMsg(''); updateTypeUI(); renderList();
     $('formCard').scrollIntoView({ behavior: 'smooth' });
   }
@@ -89,7 +116,8 @@
     if (!form.batch) { formMsg('Choose a batch.'); return; }
     if (!$('date').value) { formMsg('Choose a date.'); return; }
     if (form.type === 'Class' && !$('start').value) { formMsg('Choose a start time.'); return; }
-    const cls = { batch: form.batch, type: form.type, date: $('date').value, start: $('start').value };
+    const cls = { batch: form.batch, type: form.type, date: $('date').value, start: $('start').value,
+      close: $('close').value, closeAn: form.type === 'Field' ? $('closeAn').value : '' };
     const btn = $('saveBtn');
     btn.disabled = true; btn.textContent = 'Saving…'; formMsg('');
     try {
@@ -144,6 +172,8 @@
     const b = document.createElement('b'); b.textContent = KASE.niceDate(c.date);
     const s = document.createElement('span');
     s.textContent = c.type === 'Field' ? 'Field day · FN and AN' : KASE.time12(c.start) + ' – ' + KASE.time12(c.end);
+    if (c.close && c.defaultClose && c.close !== c.defaultClose) s.textContent += (c.type === 'Field' ? ' · FN scans until ' : ' · scans until ') + KASE.time12(c.close);
+    if (c.closeAn && c.defaultCloseAn && c.closeAn !== c.defaultCloseAn) s.textContent += ' · AN scans until ' + KASE.time12(c.closeAn);
     if (c.status !== 'Active') s.textContent += ' · Cancelled';
     when.append(b, s);
     const badge = document.createElement('span'); badge.className = 'badge ' + (c.status === 'Active' ? 'b-' + c.batch : 'b-cancel'); badge.textContent = c.batch;

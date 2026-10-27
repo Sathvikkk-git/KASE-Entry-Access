@@ -9,7 +9,7 @@ Nothing here touches Google. The tests run a fake Google Apps Script in Node, so
 From the project folder (the one containing `backend/` and `tests/`):
 
 ```sh
-sh tests/run_all.sh          # all three suites
+sh tests/run_all.sh          # all three suites, 181 checks
 node tests/mock_test.js      # backend logic only (fast, a few seconds)
 node tests/register_test.js  # the copy into the KASE register
 node tests/e2e.js            # the two web pages, in a real browser
@@ -29,9 +29,9 @@ PLAYWRIGHT=/path/to/node_modules/playwright node tests/e2e.js
 
 | Suite | Checks | What it proves |
 |---|---|---|
-| `mock_test.js` | 85 | Logins, lockout, forged and edited tokens, roles. Scan windows, including the exact edges (a scan 31 minutes after a class starts is refused; a 2:00–4:00 PM class counts 1:40–2:30 PM). Field-day FN and AN. Duplicates, unknown roll numbers, back-dated scans, formula-like input, malformed requests. Creating, editing, moving and cancelling classes. Newest-first columns, future classes appearing on their day. HOD sheets and HOD email changes. |
+| `mock_test.js` | 106 | Logins, lockout, forged and edited tokens, roles. Scan windows, including the exact edges (a scan 31 minutes after a class starts is refused; a 2:00–4:00 PM class counts 1:40–2:30 PM). Field-day FN and AN. Duplicates, unknown roll numbers, back-dated scans, formula-like input, malformed requests. Creating, editing, moving and cancelling classes. Newest-first columns, future classes appearing on their day. HOD sheets and HOD email changes. Per-class scan close times: a custom FN or AN close time, the defaults when the cells are empty, validation of the limits, changing an old day's close time so that day is recalculated, and the refusal when a shorter window would take a P away. |
 | `register_test.js` | 39 | The copy into the KASE attendance register, run against a **snapshot of the real file** (its real tabs, headers, merged date cells and odd dates). Per-batch start dates, new columns placed first in each tab's own style, a hand-made column reused instead of duplicated, P/A written, the team's own entries never changed, late arrivals upgraded from A to P, no rows added, other tabs untouched. |
-| `e2e.js` | 28 | The scanner and scheduler pages in a real browser at phone size: logging in, creating/editing/cancelling classes, the overlap error, a successful scan, the red failure for a wrong barcode, offline saving and later upload, typing a roll number, the torch and zoom controls, and that the security policy blocks nothing the pages need. |
+| `e2e.js` | 36 | The scanner and scheduler pages in a real browser at phone size: logging in, creating/editing/cancelling classes, the overlap error, a successful scan, the red failure for a wrong barcode, offline saving and later upload, typing a roll number, the torch and zoom controls, the close-time fields and their defaults, and that the security policy blocks nothing the pages need. |
 
 ## Files
 
