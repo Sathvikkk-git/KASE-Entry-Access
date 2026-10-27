@@ -1,0 +1,7 @@
+# Never publish: these contain real student names or roll numbers.
+# They live in the project folder on the KASE computer, not in this public repository.
+backend/
+data/
+tests/*.js
+tests/*.sh
+tests/data/

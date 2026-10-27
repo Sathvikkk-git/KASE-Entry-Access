@@ -2,6 +2,8 @@
 
 This guide explains the whole project in plain language: what it does, how it works, how to set it up from nothing, how to use it every day, how to fix common problems, and what we plan to add later.
 
+**Changing the code?** Read `DEVELOPER_NOTES.md` for how it is built, and `tests/README.md` for how to check a change before deploying. `START_HERE.md` says which files to open first.
+
 Last updated: 14 October 2026 (scan times: classes until 30 min after start; field days 8:50–10:30 AM and 1:40–2:30 PM)
 
 Previous update: 14 October 2026 (daily copy into the Gamma, Delta and Epsilon batch tabs of the KASE register; 7 students added)
@@ -363,28 +365,37 @@ Already done (12 Oct 2026): newest class first; future classes hidden until thei
 
 ## 16. How it was tested
 
-- The backend logic was tested against a simulated Google Sheet with **85 automatic checks**: the scan time limits (a scan 31 minutes after a class start, between field-day sessions, or after 2:30 PM is not counted; a 2:00–4:00 PM class counts 1:40–2:30 PM), logins, wrong passwords and lockout, forged and edited tokens, early arrivals, duplicates, unknown roll numbers, back-to-back classes, field-day FN and AN scanning (including the 2:00 PM and 4:00 PM edges), hand-typed AN entries being kept, editing/moving/cancelling classes, HOD email changes, newest-first ordering, future classes appearing on their day, formula-like input, back-dated scans and malformed requests.
-- The register copy was tested against a copy of the real KASE register file (all its tabs, headers and merged dates) with **39 checks**: nothing copied before 12:00 PM, no rows added to the register for students it doesn't have, per-batch start dates (Gamma and Epsilon from 13 Oct, Delta from 14 Oct), a hand-made 13 Oct column reused without changing the team's entries, only the Gamma, Delta and Epsilon batch tabs written (found by name, any capitals), the date written in row 1 and new days placed first in each tab's own style, no duplicate columns for a day, P/A written, register students outside the Anveshana list left blank, older attendance and other tabs untouched, roll-number typos matched, team corrections (including ML) kept, late arrivals upgraded at 4:15 PM, no extra runs, the next day placed in front, and nothing written before 14 Oct.
-- Both web pages were tested in a real browser on a phone-sized screen with **28 checks**: logging in, creating/editing/cancelling classes, the overlap error, scanning, the red failure for a wrong barcode, offline saving and later upload, typing a roll number, the torch and zoom controls, and that the security policy blocks nothing the pages need.
-- The barcode on a real KGR ID card was decoded from a photo, both with and without the plastic cover.
+The tests live in `tests/` and run on your own computer. Nothing in them touches Google, so they are safe to run any time. From the project folder:
 
-The first live test on the reception phone and the real Google Sheet is still the final check.
+```sh
+sh tests/run_all.sh
+```
 
----
+**152 checks in three suites:**
+
+| Suite | Checks | Covers |
+|---|---|---|
+| `mock_test.js` | 85 | The backend against a fake Google Apps Script: logins and lockout, forged tokens, scan windows and their exact edges, field-day FN and AN, duplicates, unknown roll numbers, back-dated scans, creating/editing/cancelling classes, newest-first columns, future classes, HOD sheets. |
+| `register_test.js` | 39 | The copy into the KASE register, against a snapshot of the real file with all its tabs, headers and odd dates. |
+| `e2e.js` | 28 | The scanner and scheduler pages in a real browser at phone size, including offline saving and later upload. |
+
+The barcode on a real KGR ID card was also decoded from a photo, with and without the plastic cover.
+
+Run these before every deployment. They catch the kind of mistake that would otherwise appear as missing attendance in the middle of a real class. `tests/README.md` explains what to do when one fails.
 
 ## 17. Files in this folder
 
-| File | What it is |
-|---|---|
-| `README.md` | Short overview |
-| `PROJECT_GUIDE.md` | This guide |
-| `website/` | The two web pages and their files. Upload these to GitHub Pages. |
-| `website/config.js` | The backend's web app URL |
-| `website/scan.html`, `scan.js` | Reception scanner (page and its logic) |
-| `website/admin.html`, `admin.js` | Class scheduler (page and its logic) |
-| `website/common.js`, `style.css` | Shared helpers and styling |
-| `website/sw.js` | Makes the scanner work offline |
-| `backend/Code.gs` | The Apps Script backend (contains student names, keep private) |
-| `data/Anveshana_2026_students_by_batch.xlsx` | Cleaned student list (165 students) |
+| File | What it is | Keep private? |
+|---|---|---|
+| `START_HERE.md` | What to read first, and what to attach to a new chat | No |
+| `README.md` | Short overview | No |
+| `PROJECT_GUIDE.md` | This guide | No |
+| `DEVELOPER_NOTES.md` | How the code is built, for whoever changes it | No |
+| `website/` | The two web pages and their files (this is the GitHub repository) | No |
+| `tests/` | The three test suites and the fake Apps Script | Code no, `tests/data/` **yes** |
+| `backend/Code.gs` | The Apps Script backend | **Yes** — contains student names |
+| `data/Anveshana_2026_students_by_batch.xlsx` | Cleaned student list | **Yes** |
+
+"Keep private" means never upload it to the public GitHub repository.
 
 Architecture document: https://claude.ai/code/artifact/d8b5e20d-94e2-4f30-9625-1b7ce21df1b7

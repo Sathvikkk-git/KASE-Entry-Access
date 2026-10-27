@@ -8,7 +8,14 @@ The receptionist scans each student's college ID card with a phone. The system m
 
 ## What's in this repository
 
-This repository holds only the **website**, the `website/` folder described in the guide. The backend script (`Code.gs`) and the student list contain student names, so they are kept privately and never uploaded here.
+The **website** and the **documentation**. The backend script (`Code.gs`), the student list and the test code contain real student names or roll numbers, so they stay in the project folder on the KASE computer and are never uploaded here (see `.gitignore`). `tests/README.md` documents those tests even though the test files themselves are private.
+
+| Document | What it covers |
+|---|---|
+| [START_HERE.md](START_HERE.md) | What to read first, and what to attach when opening this project in a new chat |
+| [PROJECT_GUIDE.md](PROJECT_GUIDE.md) | How the system works, setup, daily use, troubleshooting |
+| [DEVELOPER_NOTES.md](DEVELOPER_NOTES.md) | How the code is built: data model, settings, gotchas |
+| [tests/README.md](tests/README.md) | The 152 automatic checks and how to run them |
 
 | Page | Who uses it |
 |---|---|
